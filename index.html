@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industry Strategy Analyst</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e2633;
+      background: #f4f5f7;
+    }
+
+    /* ============================================================
+       DESIGN TOKENS
+    ============================================================ */
+    :root {
+      --navy:        #0f2240;
+      --navy-light:  #162d4e;
+      --text-body:   #1e2633;
+      --text-sec:    #4a5568;
+      --text-muted:  #718096;
+      --bg-page:     #f4f5f7;
+      --bg-card:     #ffffff;
+      --accent:      #1a56db;
+      --accent-lt:   #eff6ff;
+      --border:      #e2e8f0;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:   0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+      --radius:      8px;
+      --radius-sm:   4px;
+    }
+
+    /* Dead tokens removed: --charcoal, --bg-card, evidence color aliases
+       (evidence colors are applied directly in badge classes) */
+
+    /* ============================================================
+       TYPOGRAPHY
+    ============================================================ */
+    h2 { font-size: 20px; font-weight: 700; line-height: 1.3; }
+    h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--navy); }
+    h4 { font-size: 13px; font-weight: 600; line-height: 1.4; }
+    p  { color: var(--text-sec); margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ============================================================
+       LANDING STATE
+    ============================================================ */
+    #landing {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .landing-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .landing-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.2;
+      margin-bottom: 12px;
+      max-width: 600px;
+    }
+    .landing-subtitle {
+      font-size: 15px;
+      color: var(--text-sec);
+      margin-bottom: 36px;
+      max-width: 460px;
+      line-height: 1.6;
+    }
+    .landing-form {
+      width: 100%;
+      max-width: 540px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .landing-input {
+      width: 100%;
+      padding: 13px 16px;
+      font-size: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text-body);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .landing-input:focus { border-color: var(--accent); }
+    .landing-input::placeholder { color: #a0aec0; }
+    .landing-actions { display: flex; gap: 8px; }
+    .btn-primary {
+      flex: 1;
+      padding: 11px 20px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-secondary {
+      padding: 11px 18px;
+      background: #fff;
+      color: var(--text-sec);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .landing-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .example-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+    .chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-sec);
+      cursor: pointer;
+      transition: all 0.13s;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ============================================================
+       LOADING STATE
+    ============================================================ */
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    #loading-state {
+      display: none;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 80px 40px 40px;
+    }
+    #loading-state.active { display: block; }
+    .sk-h   { height: 26px; width: 45%; margin-bottom: 24px; }
+    .sk-c   { height: 90px; border-radius: var(--radius); }
+    .sk-t1  { height: 13px; width: 92%; margin-bottom: 8px; }
+    .sk-t2  { height: 13px; width: 76%; margin-bottom: 8px; }
+    .sk-t3  { height: 13px; width: 83%; }
+
+    /* ============================================================
+       REPORT SHELL
+    ============================================================ */
+    #report-state { display: none; }
+    #report-state.active { display: block; }
+
+    /* Fixed top bar */
+    .rpt-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 54px;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      gap: 18px;
+      z-index: 200;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .rpt-brand {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .rpt-divider {
+      width: 1px; height: 18px;
+      background: rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .rpt-input-group { display: flex; gap: 7px; flex: 1; max-width: 460px; }
+    .rpt-input {
+      flex: 1;
+      padding: 6px 11px;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 5px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      outline: none;
+    }
+    .rpt-input::placeholder { color: rgba(255,255,255,0.45); }
+    .rpt-input:focus { border-color: rgba(255,255,255,0.4); }
+    .btn-rpt-gen {
+      padding: 6px 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-rpt-back {
+      padding: 6px 11px;
+      background: transparent;
+      color: rgba(255,255,255,0.65);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 5px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-rpt-back:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+    .rpt-mode-label { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+
+    /* Left nav + content */
+    .rpt-layout { display: flex; padding-top: 54px; min-height: 100vh; }
+    .rpt-nav {
+      position: fixed;
+      top: 54px; left: 0;
+      width: 210px;
+      height: calc(100vh - 54px);
+      background: #fff;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+    .nav-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 18px 8px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 18px;
+      font-size: 12px;
+      color: var(--text-sec);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.12s;
+      user-select: none;
+    }
+    .nav-link:hover { background: var(--bg-page); color: var(--text-body); }
+    .nav-link.active {
+      border-left-color: var(--accent);
+      background: var(--accent-lt);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-num { font-size: 10px; font-weight: 700; color: var(--text-muted); width: 16px; flex-shrink: 0; }
+    .nav-link.active .nav-num { color: var(--accent); }
+
+    /* Main content */
+    .rpt-content {
+      margin-left: 210px;
+      flex: 1;
+      padding: 28px 36px 60px;
+      max-width: 1080px;
+    }
+
+    /* Mode banner */
+    .mode-banner {
+      padding: 11px 15px;
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      font-size: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      line-height: 1.5;
+    }
+    .mode-banner.seeded   { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .mode-banner.framework { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .mode-banner strong { font-weight: 700; }
+
+    /* ============================================================
+       REPORT SECTIONS
+    ============================================================ */
+    .rpt-section { margin-bottom: 56px; scroll-margin-top: 68px; }
+    .sec-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border);
+    }
+    .sec-num  { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; }
+    .sec-title { font-size: 19px; font-weight: 700; color: var(--navy); }
+
+    /* ============================================================
+       CARDS & GRIDS
+    ============================================================ */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .ga { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+
+    /* KPI summary cards */
+    .kpi-card {
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-label  { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+    .kpi-value  { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 5px; line-height: 1.3; }
+    .kpi-sub    { font-size: 11px; color: var(--text-sec); line-height: 1.4; }
+
+    /* Thesis box */
+    .thesis {
+      background: var(--navy);
+      color: #fff;
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+    .thesis-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 9px; }
+    .thesis p { color: rgba(255,255,255,0.88); font-size: 13px; line-height: 1.7; margin: 0; }
+
+    /* Insight list */
+    .insight-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .insight-item {
+      display: flex; gap: 11px; align-items: flex-start;
+      padding: 11px 14px;
+      background: var(--bg-page);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent);
+    }
+    .i-num  { font-size: 10px; font-weight: 700; color: var(--accent); flex-shrink: 0; padding-top: 1px; }
+    .i-text { font-size: 13px; color: var(--text-body); line-height: 1.5; }
+
+    /* ============================================================
+       EVIDENCE BADGES
+    ============================================================ */
+    .badges { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+    .badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .b-fact   { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .b-assump { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .b-infer  { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    /* Severity */
+    .b-critical    { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .b-high        { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .b-med-high    { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .b-med         { background: #f0f9ff; color: #0c4a6e; border: 1px solid #bae6fd; }
+    /* Type */
+    .b-structural  { background: #f5f3ff; color: #4c1d95; border: 1px solid #ddd6fe; }
+    .b-operational { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .b-cyclical    { background: #f0f9ff; color: #0c4a6e; border: 1px solid #bae6fd; }
+    /* Confidence */
+    .b-conf-h      { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .b-conf-mh     { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; }
+    .b-conf-m      { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .b-conf-lm     { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    /* Player type */
+    .b-prime       { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .b-specialist  { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .b-ai          { background: #f5f3ff; color: #4c1d95; border: 1px solid #ddd6fe; }
+    .b-noneur      { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .b-subsys      { background: #f0f9ff; color: #0c4a6e; border: 1px solid #bae6fd; }
+    /* Growth */
+    .b-explosive   { background: #fef2f2; color: #991b1b; }
+    .b-strong      { background: #ecfdf5; color: #065f46; }
+    .b-moderate    { background: #eff6ff; color: #1e40af; }
+    .b-emerging    { background: #f5f3ff; color: #4c1d95; }
+
+    /* ============================================================
+       SCOPE BOX
+    ============================================================ */
+    .scope-box { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+    .scope-in, .scope-out {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .scope-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 7px; }
+    .scope-in  .scope-label { color: #059669; }
+    .scope-out .scope-label { color: #dc2626; }
+    .scope-text { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
+
+    /* ============================================================
+       SEGMENT CARDS
+    ============================================================ */
+    .seg-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .seg-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+    .seg-desc { font-size: 11px; color: var(--text-sec); line-height: 1.4; }
+    .seg-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+    .seg-tag  { font-size: 10px; color: var(--text-muted); background: var(--bg-page); padding: 2px 5px; border-radius: 3px; }
+
+    /* ============================================================
+       VALUE CHAIN FLOW
+    ============================================================ */
+    .vc-flow {
+      display: flex;
+      align-items: center;
+      overflow-x: auto;
+      padding: 4px 0 14px;
+      margin-bottom: 20px;
+      gap: 0;
+    }
+    .vc-node { flex: 1; min-width: 86px; max-width: 115px; }
+    .vc-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 8px;
+      min-height: 76px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: all 0.13s;
+    }
+    .vc-box:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+    .vc-n  { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 3px; }
+    .vc-name { font-size: 11px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .vc-dep {
+      margin-top: auto;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 2px;
+      align-self: flex-start;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .vc-dep-h  { background: #fef2f2; color: #991b1b; }
+    .vc-dep-m  { background: #fffbeb; color: #92400e; }
+    .vc-dep-l  { background: #ecfdf5; color: #065f46; }
+    .vc-dep-na { background: var(--bg-page); color: var(--text-muted); }
+    .vc-arrow  { padding: 0 5px; color: var(--text-muted); font-size: 14px; flex-shrink: 0; }
+    .vc-detail {
+      display: none;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-md);
+    }
+    .vc-detail.open { display: block; }
+
+    /* ============================================================
+       VALUE POOLS
+    ============================================================ */
+    .vp-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .vp-bar-col { width: 110px; flex-shrink: 0; }
+    .vp-name  { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .vp-rev   { font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+    .vp-bar   { height: 5px; border-radius: 3px; margin-bottom: 3px; }
+    .vp-ml    { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .vp-main  { flex: 1; }
+    .vp-cap   { font-size: 12px; color: var(--text-sec); margin-bottom: 5px; line-height: 1.4; }
+    .vp-dyn   { font-size: 11px; color: var(--text-sec); font-style: italic; line-height: 1.4; }
+
+    /* ============================================================
+       COMPETITOR CARDS
+    ============================================================ */
+    .comp-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .comp-name  { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .comp-hq    { font-size: 11px; color: var(--text-muted); margin-bottom: 7px; }
+    .comp-seg   { font-size: 11px; color: var(--text-sec); margin-bottom: 7px; }
+    .comp-mile  {
+      font-size: 11px; color: var(--text-sec);
+      background: var(--bg-page); padding: 7px;
+      border-radius: var(--radius-sm);
+      border-left: 2px solid var(--accent);
+      line-height: 1.4;
+    }
+
+    /* Filter buttons */
+    .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .flt-btn {
+      padding: 4px 11px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+      color: var(--text-sec);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .flt-btn:hover  { border-color: var(--accent); color: var(--accent); }
+    .flt-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ============================================================
+       DISRUPTION CARDS
+    ============================================================ */
+    .dis-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .dis-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .dis-body { font-size: 12px; color: var(--text-sec); line-height: 1.55; margin-bottom: 10px; }
+    .dis-timing { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .dis-split { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .dis-benefit, .dis-exposed {
+      font-size: 11px;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      line-height: 1.4;
+    }
+    .dis-benefit { background: #ecfdf5; color: #065f46; }
+    .dis-exposed { background: #fef2f2; color: #991b1b; }
+    .dis-sl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 3px; }
+
+    /* ============================================================
+       CONSTRAINT ITEMS
+    ============================================================ */
+    .con-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      gap: 14px;
+    }
+    .con-rank { font-size: 18px; font-weight: 800; color: var(--border); width: 24px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .con-body { flex: 1; }
+    .con-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .con-desc { font-size: 12px; color: var(--text-sec); line-height: 1.5; margin-bottom: 8px; }
+    .con-meta { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    /* ============================================================
+       KPI DETAIL CARDS
+    ============================================================ */
+    .kpi-d-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-d-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .kpi-d-def  { font-size: 11px; color: var(--text-sec); line-height: 1.4; margin-bottom: 10px; }
+    .kpi-bench  { background: var(--bg-page); border-radius: var(--radius-sm); padding: 9px; margin-bottom: 9px; }
+    .kpi-bl     { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 3px; }
+    .kpi-bv     { font-size: 12px; color: var(--text-body); line-height: 1.4; }
+    .kpi-why    { font-size: 11px; color: var(--text-sec); font-style: italic; line-height: 1.4; }
+    .kpi-diff   { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+    /* ============================================================
+       ASSUMPTION CARDS
+    ============================================================ */
+    .asm-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .asm-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+    .asm-stmt { font-size: 12px; color: var(--text-body); line-height: 1.5; margin-bottom: 12px; }
+    .asm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .asm-field { background: var(--bg-page); border-radius: var(--radius-sm); padding: 8px; }
+    .asm-fl    { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 3px; }
+    .asm-fv    { font-size: 11px; color: var(--text-body); line-height: 1.4; }
+
+    /* ============================================================
+       SCENARIO TABLE
+    ============================================================ */
+    .sc-wrap { overflow-x: auto; }
+    .sc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .sc-table th {
+      background: var(--navy);
+      color: #fff;
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .sc-table td {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-sec);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .sc-table tr:last-child td { border-bottom: none; }
+    .sc-table tr:nth-child(even) td { background: var(--bg-page); }
+    .sc-label { font-weight: 700; color: var(--navy); }
+
+    /* ============================================================
+       CHART CONTAINERS
+    ============================================================ */
+    .chart-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 18px;
+    }
+    .chart-ttl  { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .chart-sub  { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+    .chart-note { font-size: 10px; color: var(--text-muted); font-style: italic; margin-top: 9px; }
+
+    /* Empty state for framework charts */
+    .empty-chart {
+      height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-page);
+      border-radius: var(--radius-sm);
+      border: 1px dashed var(--border);
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* ============================================================
+       FRAMEWORK MODE ELEMENTS
+    ============================================================ */
+    .fw-intro {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+    .fw-title { font-size: 12px; font-weight: 700; color: #92400e; margin-bottom: 5px; }
+    .fw-desc  { font-size: 12px; color: #78350f; line-height: 1.5; }
+    .fw-qs    { margin-top: 9px; list-style: none; display: flex; flex-direction: column; gap: 3px; padding: 0; }
+    .fw-qs li {
+      font-size: 11px; color: #92400e;
+      padding: 3px 0 3px 14px;
+      border-bottom: 1px solid #fde68a;
+      position: relative;
+    }
+    .fw-qs li:last-child { border-bottom: none; }
+    .fw-qs li::before { content: "→"; position: absolute; left: 0; color: #d97706; }
+    .ph-card {
+      background: #fff;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .ph-line  { height: 11px; background: var(--bg-page); border-radius: 3px; }
+    .ph-line.s { width: 55%; }
+    .ph-line.m { width: 78%; }
+    .ph-line.f { width: 100%; }
+    .ph-label { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 2px; }
+
+    /* ============================================================
+       FINANCIALS SECTION
+    ============================================================ */
+    .fin-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .fin-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .fin-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 5px; }
+    .fin-card-value { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px; line-height: 1.2; }
+    .fin-card-sub   { font-size: 11px; color: var(--text-sec); line-height: 1.4; }
+    .fin-insights   { display: flex; flex-direction: column; gap: 7px; margin-top: 18px; }
+    .fin-insight    {
+      background: #fff;
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 9px 12px;
+      font-size: 12px;
+      color: var(--text-sec);
+      line-height: 1.5;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ============================================================
+       TECHNOLOGY SECTION
+    ============================================================ */
+    .tech-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 18px;
+    }
+    .tech-panel-hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tech-panel-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+    .tech-badge-core    { background: #0f2240; color: #fff; }
+    .tech-badge-enable  { background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; }
+    .tech-panel-summary { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
+    .tech-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .tech-item {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .tech-item-name { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .tech-item-desc { font-size: 11px; color: var(--text-sec); line-height: 1.5; margin-bottom: 8px; }
+    .tech-item-meta { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    /* ============================================================
+       OPERATIONS / SUPPLY CHAIN SECTION
+    ============================================================ */
+    .ops-flow {
+      display: flex;
+      align-items: center;
+      overflow-x: auto;
+      padding: 4px 0 14px;
+      margin-bottom: 20px;
+      gap: 0;
+    }
+    .ops-node { flex: 1; min-width: 90px; max-width: 120px; }
+    .ops-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 8px;
+      min-height: 68px;
+      display: flex;
+      flex-direction: column;
+    }
+    .ops-n    { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 3px; }
+    .ops-name { font-size: 11px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .ops-geo  { font-size: 9px; color: var(--text-muted); margin-top: auto; }
+    .ops-geo-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 18px; }
+    .ops-geo-table th { background: var(--navy); color: #fff; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; }
+    .ops-geo-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-sec); vertical-align: top; }
+    .ops-geo-table tr:last-child td { border-bottom: none; }
+    .ops-geo-table tr:nth-child(even) td { background: var(--bg-page); }
+    .dep-badge {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 2px;
+    }
+    .dep-critical { background: #fef2f2; color: #991b1b; }
+    .dep-high     { background: #fff7ed; color: #9a3412; }
+    .dep-medium   { background: #fffbeb; color: #92400e; }
+    .dep-low      { background: #ecfdf5; color: #065f46; }
+    .ops-bottlenecks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .ops-bn {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 3px solid #ea580c;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 10px 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .ops-bn-name { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .ops-bn-desc { font-size: 11px; color: var(--text-sec); line-height: 1.5; }
+    .ops-resilience {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 12px;
+      color: #0c4a6e;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       SOURCE PANEL
+    ============================================================ */
+    .src-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-top: 36px;
+    }
+    .src-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .src-hdr-title { font-size: 12px; font-weight: 700; color: var(--navy); }
+    .src-toggle    { font-size: 11px; color: var(--accent); }
+    .src-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .src-body.open { max-height: 2200px; }
+    .src-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .src-table th {
+      background: var(--bg-page);
+      color: var(--text-muted);
+      padding: 7px 13px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .src-table td { padding: 7px 13px; border-bottom: 1px solid #f0f2f5; color: var(--text-sec); vertical-align: top; }
+    .src-table tr:last-child td { border-bottom: none; }
+    .src-tier { font-weight: 700; }
+    .src-link { color: var(--accent); text-decoration: none; }
+    .src-link:hover { text-decoration: underline; }
+
+    /* ============================================================
+       UTILITIES
+    ============================================================ */
+    .mb-0  { margin-bottom: 0; }
+    .mb-10 { margin-bottom: 10px; }
+    .mb-14 { margin-bottom: 14px; }
+    .mb-18 { margin-bottom: 18px; }
+    .mb-22 { margin-bottom: 22px; }
+    .mt-10 { margin-top: 10px; }
+    .mt-14 { margin-top: 14px; }
+    .row   { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .t-muted  { color: var(--text-muted); font-size: 11px; }
+    .t-small  { font-size: 11px; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 860px) {
+      .rpt-nav   { display: none; }
+      .rpt-content { margin-left: 0; padding: 22px 18px 48px; }
+      .g4, .g3 { grid-template-columns: repeat(2,1fr); }
+      .g2  { grid-template-columns: 1fr; }
+      .scope-box { grid-template-columns: 1fr; }
+      .asm-grid  { grid-template-columns: 1fr; }
+      .dis-split { grid-template-columns: 1fr; }
+      .landing-title { font-size: 26px; }
+      #loading-state { padding: 60px 20px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     LANDING STATE
+============================================================ -->
+<div id="landing">
+  <div class="landing-eyebrow">Strategy Intelligence Tool</div>
+  <h1 class="landing-title">Industry Strategy Analyst</h1>
+  <p class="landing-subtitle">Decision-grade industry analysis for consultants and board executives. Enter any industry to generate a structured analytical framework.</p>
+
+  <div class="landing-form">
+    <input type="text" id="landing-input" class="landing-input"
+      placeholder="e.g. European military unmanned aerial systems (UAS)"
+      autocomplete="off" />
+    <div class="landing-actions">
+      <button class="btn-primary" id="btn-generate-landing">Generate Analysis</button>
+      <button class="btn-secondary" id="btn-clear-landing">Clear</button>
+    </div>
+    <div>
+      <div class="landing-hint">Try the seeded example or any industry:</div>
+      <div class="example-chips">
+        <span class="chip" data-value="European military UAS">European Military UAS ★</span>
+        <span class="chip" data-value="European defense electronics">Defense Electronics</span>
+        <span class="chip" data-value="cloud security software">Cloud Security</span>
+        <span class="chip" data-value="offshore wind energy">Offshore Wind</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     LOADING STATE
+============================================================ -->
+<div id="loading-state">
+  <div class="skeleton sk-h mb-22"></div>
+  <div class="g4 mb-18">
+    <div class="skeleton sk-c"></div>
+    <div class="skeleton sk-c"></div>
+    <div class="skeleton sk-c"></div>
+    <div class="skeleton sk-c"></div>
+  </div>
+  <div class="skeleton sk-t1"></div>
+  <div class="skeleton sk-t2"></div>
+  <div class="skeleton sk-t3"></div>
+</div>
+
+<!-- ============================================================
+     REPORT STATE
+============================================================ -->
+<div id="report-state">
+
+  <!-- Fixed header bar -->
+  <div class="rpt-header">
+    <div class="rpt-brand">Industry Strategy Analyst</div>
+    <div class="rpt-divider"></div>
+    <div class="rpt-input-group">
+      <input type="text" id="rpt-input" class="rpt-input" placeholder="Enter industry..." />
+      <button class="btn-rpt-gen" id="btn-regen">Regenerate</button>
+      <button class="btn-rpt-back" id="btn-back">← Back</button>
+    </div>
+    <div class="rpt-mode-label" id="rpt-mode-label"></div>
+  </div>
+
+  <div class="rpt-layout">
+    <!-- Left nav -->
+    <nav class="rpt-nav">
+      <div class="nav-group-label">Report Sections</div>
+      <div id="nav-links"></div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="rpt-content" id="rpt-content">
+      <div id="mode-banner"></div>
+      <div id="sections"></div>
+      <div id="source-panel"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   0. CONFIGURATION
+   BACKEND_URL: auto-detects localhost for local dev.
+   For production, update the string below to your Render backend URL
+   after deploying (e.g. "https://industry-analyst-api.onrender.com").
+============================================================ */
+const BACKEND_URL = (function() {
+  const isLocal = window.location.hostname === "localhost" ||
+                  window.location.hostname === "127.0.0.1";
+  if (isLocal) return "http://localhost:3001";
+  // ↓ Replace this with your Render backend URL after deploying the backend
+  return "https://industry-analyst-uas.onrender.com";
+}());
+
+/* ============================================================
+   1. EMBEDDED DATA — European Military UAS
+   Source: research_summary.md + 7 CSV files in data/manual/
+============================================================ */
+
+const UAS_EXEC = {
+  thesis: "The European military UAS industry is at an inflection point. Defense spending across EU-27 reached €343B in 2024 (+19% YoY) and is projected at €381B in 2025. Within this envelope, UAS is shifting from a niche capability to a structural priority — driven by Ukraine's battlefield lessons, the rise of AI/autonomy, and a political push for European defense sovereignty. The industry is attractive at the segment level but structurally constrained at the system level: value concentrates in autonomy software, sensor/payload integration, and sustainment, not in platform assembly.",
+  insights: [
+    "Value concentrates in autonomy software, sensor/payload integration, and sustainment — not platform assembly. Platform assembly shows high revenue but compressed margin due to juste retour workshare across 4+ nations.",
+    "The fastest-growing segments by volume are loitering munitions and attritable systems. By margin trajectory, autonomy software (Helsing ~$4.5B, Auterion $130M Series B) is the emerging dominant value pool.",
+    "Fragmented European demand — 27 independent procurement systems, ~1% of defense transactions under EU Defence Procurement Directive — and 10–15 year acquisition cycles remain the binding structural constraints.",
+    "Ukraine proved that cheap, mass-produced, AI-enabled attritable systems can defeat expensive platforms (FPV at ~€2,500/effect vs. Shahed at ~€35,000 = 1:14 ratio). LEAP (UK, France, Germany, Italy, Poland) explicitly adopts 'build first, perfect later' doctrine.",
+    "European defense tech VC investment hit a record $5.2B in 2024. Helsing, Quantum Systems (~€3B), and Tekever (>$1.3B) are building open, software-first stacks that may shift value capture from primes within 3–5 years."
+  ],
+  kpi_cards: [
+    { label: "Industry Attractiveness",  value: "Attractive (segment-level)", sub: "Structurally constrained at system level. Value pools vary sharply by segment." },
+    { label: "Main Value Pool",           value: "Integration + Sustainment",   sub: "Sustainment estimated 2–3× acquisition cost for MALE/HALE. Autonomy software is the fastest-growing margin pool." },
+    { label: "Biggest Constraint",        value: "Procurement Timelines",        sub: "Eurodrone: 15+ years concept to operational. 27 fragmented procurement systems compound this." },
+    { label: "Core KPI",                  value: "Cost per Effect",              sub: "FPV: ~€2,500/effect vs. MALE sortie >>€100K. This ratio is reshaping doctrine and force structure." }
+  ]
+};
+
+const UAS_SEGMENTS = [
+  { id:"SEG01", name:"MALE/HALE ISR",        desc:"Medium/High Altitude Long Endurance ISR for persistent surveillance", size:">600 kg", expendable:"Reusable", players:"Airbus, General Atomics, IAI, Leonardo",             growth:"Moderate",    growth_score:6,  importance:8,  importance_lbl:"High",      evidence:"FACT" },
+  { id:"SEG02", name:"Tactical ISR",          desc:"Battalion/brigade-level reconnaissance; fastest path to operational capability", size:"25–600 kg", expendable:"Reusable", players:"Rheinmetall, Tekever, Quantum Systems, Elbit", growth:"Strong",     growth_score:8,  importance:8,  importance_lbl:"High",      evidence:"FACT" },
+  { id:"SEG03", name:"Micro / Mini ISR",      desc:"Man-portable UAS for platoon-level reconnaissance; ubiquitous but low individual value", size:"<25 kg", expendable:"Reusable", players:"Parrot, AeroVironment, FLIR/Teledyne",         growth:"Strong",     growth_score:7,  importance:5,  importance_lbl:"Medium",    evidence:"FACT" },
+  { id:"SEG04", name:"Strike / UCAV",         desc:"Unmanned combat vehicles for deep strike in contested airspace; pre-production phase in Europe", size:">1,000 kg", expendable:"Reusable", players:"Dassault, Airbus, BAE Systems, TAI",          growth:"Emerging",   growth_score:4,  importance:9,  importance_lbl:"Very High", evidence:"FACT" },
+  { id:"SEG05", name:"Loitering Munitions",   desc:"Expendable precision-guided munitions that loiter before striking; bridge between drones and missiles", size:"5–120 kg", expendable:"Expendable", players:"Helsing, Rheinmetall-UVision, MBDA, IAI",    growth:"Very Strong",growth_score:9,  importance:9,  importance_lbl:"Very High", evidence:"FACT" },
+  { id:"SEG06", name:"Attritable / FPV",      desc:"Low-cost expendable drones for saturation tactics; paradigm shift from exquisite to mass", size:"<25 kg", expendable:"Expendable", players:"Helsing, Ukrainian manufacturers, EU producers",  growth:"Explosive",  growth_score:10, importance:8,  importance_lbl:"High",      evidence:"FACT" },
+  { id:"SEG07", name:"Autonomy / Software",   desc:"AI and autonomous flight software enabling UAS operations across hardware types; winner-take-most dynamics", size:"N/A",    expendable:"N/A",       players:"Helsing, Auterion, Shield AI",               growth:"Very Strong",growth_score:9,  importance:10, importance_lbl:"Very High", evidence:"FACT + INFERENCE" },
+  { id:"SEG08", name:"C2 / Datalink / GCS",  desc:"Command and control systems, ground stations, and datalinks; interoperability lock-in creates recurring revenue", size:"N/A",    expendable:"N/A",       players:"Thales, Indra, Elettronica",                 growth:"Moderate",   growth_score:6,  importance:7,  importance_lbl:"High",      evidence:"FACT" }
+];
+
+const UAS_VALUE_CHAIN = [
+  { id:"VC01", name:"Components",        desc:"Engines, avionics, IMUs, semiconductors, composite materials", players:"SBG Systems (FR), UAV Navigation (ES), Embention (EU)", bottleneck:"Semiconductor shortages, rare-earth concentration", dep:"High",   dep_notes:"Semiconductors (Taiwan/Korea/US), rare-earth elements (China)", control:"Component IP and supply agreements", evidence:"FACT" },
+  { id:"VC02", name:"Sensors/Payloads",  desc:"EO/IR cameras, SAR radar, SIGINT pods, EW payloads, targeting systems", players:"Safran (Euroflir 610), Hensoldt (SIGINT/DAA), Thales (EW)", bottleneck:"Limited EU SAR radar capability, ITAR-controlled components", dep:"Medium", dep_notes:"Some US-origin sensor components under ITAR", control:"Sensor IP and integration expertise — high switching costs", evidence:"FACT" },
+  { id:"VC03", name:"Software/Autonomy", desc:"Mission planning, autonomous navigation, AI target recognition, swarm coordination", players:"Helsing (Altra), Auterion (PX4/OS), NeuralAgent, Airbus (MARS)", bottleneck:"Autonomy regulation, human-in-the-loop requirements", dep:"Medium", dep_notes:"Some US providers (Shield AI) but EU leaders emerging", control:"AI/ML IP and training data — winner-take-most dynamics", evidence:"FACT + INFERENCE" },
+  { id:"VC04", name:"Comms/Datalink",    desc:"SATCOM terminals, LOS datalinks, tactical data links, NATO-standard interfaces", players:"Indra (SATCOM), Thales (TDL), Elettronica", bottleneck:"Limited EU military SATCOM capacity, STANAG implementation variations", dep:"High",   dep_notes:"Honeywell SATCOM widely used; EU SATCOM capacity limited", control:"SATCOM bandwidth and frequency allocation — government-controlled", evidence:"FACT + INFERENCE" },
+  { id:"VC05", name:"Platform Mfg.",     desc:"Airframe assembly, propulsion integration, structural design, manufacturing", players:"Airbus DS, Leonardo, Quantum Systems, Tekever, Rheinmetall", bottleneck:"Manufacturing scale for attritable systems, certification timelines", dep:"Low",    dep_notes:"EU capability exists for traditional platforms; gap for mass attritable production", control:"Certified manufacturing facilities and design authority", evidence:"FACT" },
+  { id:"VC06", name:"System Integration",desc:"Assembly of platform + sensors + software + C2 into deliverable weapon system", players:"Airbus DS, Leonardo, Dassault, BAE Systems, General Atomics (US)", bottleneck:"Multi-nation workshare complexity (Eurodrone: 4 nations, 3 co-primes)", dep:"Medium", dep_notes:"General Atomics integrates MQ-9 variants for European customers", control:"Prime contractor status and procurement relationships — very high barriers", evidence:"FACT" },
+  { id:"VC07", name:"Procurement",       desc:"Government procurement authorities, funding allocation, contract management, regulatory approval", players:"OCCAR, DGA (FR), BAAINBw (DE), DE&S (UK), EU (EDF/EDIP)", bottleneck:"Procurement timelines (15+ years), fragmented demand (27 systems)", dep:"N/A",   dep_notes:"Inherently national/European", control:"Procurement authority relationships and regulatory compliance", evidence:"FACT" },
+  { id:"VC08", name:"Deployment/Ops",    desc:"Military end-user operations, mission execution, airspace integration", players:"National armed forces, NATO operational commands", bottleneck:"Airspace integration gaps, trained operator shortages", dep:"N/A",   dep_notes:"N/A", control:"Operational doctrine and force structure decisions", evidence:"FACT + INFERENCE" },
+  { id:"VC09", name:"Sustainment",       desc:"MRO, spare parts, software updates, training, simulation, lifecycle management", players:"Primes (authorized MRO), national logistics commands", bottleneck:"MRO capacity constraints, long spare parts lead times (6–12+ months)", dep:"Medium", dep_notes:"Non-European platforms require non-European MRO chains", control:"Authorized MRO status and technical data access — high margin recurring revenue", evidence:"FACT + INFERENCE" }
+];
+
+const UAS_VALUE_POOLS = [
+  { node:"Components",       rev_dir:"Low–Medium", rev_s:3,  margin:"Low",          margin_s:2,  margin_col:"#cbd5e0", capture:"Fragmented across many suppliers",                         dynamic:"Semiconductor and rare-earth suppliers capture value through scarcity, not differentiation.", evidence:"FACT + INFERENCE" },
+  { node:"Sensors/Payloads", rev_dir:"Medium",     rev_s:5,  margin:"High",         margin_s:7,  margin_col:"#1a56db", capture:"Concentrated: Safran, Hensoldt, Thales, Leonardo",         dynamic:"IP holders capture value. Euroflir 610 and SIGINT pod contracts demonstrate high-margin positioning.", evidence:"FACT" },
+  { node:"Autonomy Software",rev_dir:"Low → Growing",rev_s:2,margin:"Very High",    margin_s:9,  margin_col:"#0f2240", capture:"Winner-take-most: Helsing, Auterion emerging",              dynamic:"Value created at software layer but may be captured by integrators who control procurement. Helsing ~$4.5B valuation signals market expectation.", evidence:"INFERENCE" },
+  { node:"C2/Datalink",      rev_dir:"Medium",     rev_s:4,  margin:"High",         margin_s:7,  margin_col:"#1a56db", capture:"Moderate: Thales, Indra, Elettronica",                     dynamic:"STANAG 4586 compliance is table stakes but implementation depth differentiates. Interoperability lock-in creates switching costs.", evidence:"FACT + INFERENCE" },
+  { node:"Platform Assembly",rev_dir:"High",       rev_s:8,  margin:"Medium-Low",   margin_s:4,  margin_col:"#94a3b8", capture:"Concentrated at prime level: Airbus, Leonardo, Dassault", dynamic:"Revenue concentrates here but margin does not — analogous to contract manufacturing. Juste retour across 4 nations compresses extraction.", evidence:"INFERENCE" },
+  { node:"System Integration",rev_dir:"Very High", rev_s:10, margin:"Medium-High",  margin_s:7,  margin_col:"#3b82f6", capture:"Highly concentrated: primes control integration contracts", dynamic:"Largest visible revenue pool but value shared with subsystem suppliers through workshare. Integration premium is real but diluted.", evidence:"FACT + INFERENCE" },
+  { node:"Sustainment",      rev_dir:"High (2–3× acq.)",rev_s:8,margin:"High",      margin_s:8,  margin_col:"#1a56db", capture:"Concentrated: primes + authorized MRO providers",          dynamic:"Hidden profit pool. Airbus €600M Heron TP support contract for Germany illustrates scale. Technical data access creates durable lock-in.", evidence:"ASSUMPTION" },
+  { node:"Loitering Munitions",rev_dir:"Growing rapidly",rev_s:5,margin:"Medium",   margin_s:5,  margin_col:"#6366f1", capture:"Emerging: Helsing, Rheinmetall-UVision, MBDA",             dynamic:"New value pool with fundamentally different economics. Manufacturing efficiency + AI targeting software drive value. MBDA 1,000/month target and €200M+ Hero backlog indicate substantial pool forming.", evidence:"INFERENCE" }
+];
+
+const UAS_COMPETITORS = [
+  { id:"C01",  name:"Airbus Defence & Space", type:"European Prime",      hq:"Germany/France/Spain",  seg:"MALE/HALE ISR, Strike/UCAV, HAPS",  mile:"CDR Aug 2025; Wingman delivery to Luftwaffe targeted 2029", adv:"System integration scale, multi-nation procurement navigation", bx:8.5, by:5.0, evidence:"FACT" },
+  { id:"C02",  name:"Leonardo",               type:"European Prime",      hq:"Italy",                  seg:"Tactical ISR, MALE ISR",            mile:"Falco Xplorer FOC 2026; Astore armed drone approval underway", adv:"Italian MoD relationship, Falco operational heritage", bx:7.0, by:5.5, evidence:"FACT" },
+  { id:"C03",  name:"Dassault Aviation",      type:"European Prime",      hq:"France",                 seg:"Strike/UCAV, MALE ISR",             mile:"New stealth combat drone announced Oct 2024", adv:"170+ nEUROn test flights, stealth design authority, Rafale ecosystem", bx:5.0, by:7.0, evidence:"FACT" },
+  { id:"C04",  name:"BAE Systems",            type:"European Prime",      hq:"UK",                     seg:"Multi-spectrum UAS, Strike/UCAV",   mile:"Acquired Malloy (heavy-lift) and Callen-Lenz (avionics) in 2024", adv:"Taranis autonomous flight heritage, UK MoD prime relationship", bx:7.5, by:4.5, evidence:"FACT" },
+  { id:"C05",  name:"SAAB",                   type:"European Specialist",  hq:"Sweden",                 seg:"HALE AEW&C, VTOL tactical",         mile:"Third GlobalEye to Sweden 2024; counter-UAS order received", adv:"Radar/sensor expertise (Erieye), Swedish MoD relationship", bx:4.0, by:6.5, evidence:"FACT" },
+  { id:"C06",  name:"Rheinmetall",            type:"European Specialist",  hq:"Germany",                seg:"Tactical ISR, Loitering Munitions",  mile:"€200M Luna NG Bundeswehr contract; large NATO Hero order 2025", adv:"Bundeswehr relationship, battlefield-proven Hero series", bx:4.5, by:7.5, evidence:"FACT" },
+  { id:"C07",  name:"Tekever",                type:"European Specialist",  hq:"Portugal",               seg:"Tactical ISR, EW",                  mile:"1,000-job UK drone factory; £400M+ 5-year commitment; unicorn valuation", adv:"Ukraine/RAF operational track record, rapid production scaling", bx:3.0, by:8.5, evidence:"FACT" },
+  { id:"C08",  name:"Quantum Systems",        type:"European Specialist",  hq:"Germany",                seg:"Tactical VTOL ISR",                 mile:"$246M FALKE mega-contract Dec 2025; ~€3B valuation", adv:"VTOL versatility, dual-use military/commercial, German SOF adoption", bx:3.5, by:8.0, evidence:"FACT" },
+  { id:"C09",  name:"Helsing",                type:"AI/Software-Led",      hq:"Germany",                seg:"Loitering Munitions, Autonomy SW",  mile:"6,000 HX-2 for Ukraine; FCAS AI contractor; Hensoldt CA-1 Europa; ~$4.5B valuation", adv:"GPS-independent navigation, Altra multi-drone AI fusion, iteration speed", bx:5.0, by:9.0, evidence:"FACT" },
+  { id:"C10",  name:"Auterion",               type:"AI/Software-Led",      hq:"Switzerland/US",         seg:"Autonomy Software, Drone OS",       mile:"$130M Series B; 33K AI strike kits for Ukraine ($50M Pentagon contract)", adv:"Vendor-independent OS, Blue sUAS certified, NATO/DoD relationships", bx:4.0, by:8.5, evidence:"FACT" },
+  { id:"C11",  name:"Parrot",                 type:"European Specialist",  hq:"France",                 seg:"Micro/Mini ISR",                    mile:"5-year DGA supply agreement; only non-US manufacturer on Blue sUAS list", adv:"100% French development, cybersecurity-hardened, DGA/DoD dual certification", bx:2.0, by:9.0, evidence:"FACT" },
+  { id:"C12",  name:"General Atomics",        type:"Non-European",         hq:"United States",          seg:"MALE/HALE ISR, Maritime",           mile:"Germany ordered 8 MQ-9B SeaGuardian Jan 2026; Italy $738M for 6 Block 5", adv:"Proven MQ-9 platform (20+ years ops), first large UAV MTC (UK, May 2025)", bx:6.0, by:8.0, evidence:"FACT" },
+  { id:"C13",  name:"IAI",                    type:"Non-European",         hq:"Israel",                 seg:"HALE ISR",                          mile:"Maiden German airspace flight May 2024; EU cross-border test Feb 2025", adv:"Heron TP operational maturity; €1B German lease, €600M Airbus support", bx:4.5, by:8.5, evidence:"FACT" },
+  { id:"C14",  name:"Elbit Systems",          type:"Non-European",         hq:"Israel",                 seg:"Multi-role MALE",                   mile:"€335M contract with unnamed European nation Nov 2024", adv:"Hermes operational record (20+ customers since 2011), multi-payload versatility", bx:5.5, by:7.5, evidence:"FACT" },
+  { id:"C15",  name:"Baykar",                 type:"Non-European",         hq:"Turkey",                 seg:"Tactical UCAV, MALE",               mile:"Piaggio Aerospace Italy acquisition Jun 2025; all 24 Polish TB2s delivered May 2024", adv:"Ukraine combat record, cost-competitive, EU manufacturing base via Piaggio", bx:4.0, by:8.0, evidence:"FACT" },
+  { id:"C16",  name:"MBDA",                   type:"Subsystem / Prime",    hq:"France/UK/Italy/Germany",seg:"Loitering Munitions, Counter-UAS",  mile:"OWE first flight autumn 2025; 1,000 units/month target; operational lot 2027", adv:"Missile manufacturing infrastructure, warhead expertise, EU government relationships", bx:3.0, by:7.5, evidence:"FACT" },
+  { id:"C17",  name:"Thales",                 type:"Subsystem / Prime",    hq:"France",                 seg:"C2/GCS, Sensors, EW, Counter-UAS",  mile:"EagleShield C-UAS deployed; compact EW payload for small UAS announced", adv:"C2 system integration, EW miniaturization (<5 kg payloads), NATO standard compliance", bx:7.0, by:5.0, evidence:"FACT" },
+  { id:"C18",  name:"Hensoldt",               type:"Subsystem / Prime",    hq:"Germany",                seg:"Sensors, SIGINT, Radar",            mile:"CA-1 Europa partnership with Helsing for autonomous combat aircraft", adv:"SIGINT IP, DAA radar for autonomous flight, Eurodrone payload consortium role", bx:3.5, by:8.5, evidence:"FACT" }
+];
+
+const UAS_DISRUPTION = [
+  { name:"AI and Autonomy",           mechanism:"Manned-unmanned teaming (Wingman, StormShroud), autonomous ISR (Helsing Altra, GPS-independent terrain-map AI), AI-enabled targeting (Helsing HX-2, Thales EW AI fusion). NATO rules currently require human-in-the-loop for weapons release.", timing:"2025–2030", benefits:"Helsing, Auterion, Shield AI; software-first entrants; platforms with open architecture", exposed:"Legacy platform primes locked into proprietary stacks; platforms without AI integration path", impact:9, likelihood:8, evidence:"FACT" },
+  { name:"Attritable Systems (Ukraine Effect)", mechanism:"Ukraine producing ~1.5M FPV drones in 2024; 96.2% domestic supply. Cost ratio: FPV (~€2,500) vs. Shahed (~€35,000) = 1:14. EU response: MBDA OWE (1,000/month target), LEAP (2027 deployment). NATO 2025 doctrine explicitly emphasizes 'massed, low-cost, attritable systems'.", timing:"Underway — 2024 onward", benefits:"MBDA, Helsing, Rheinmetall-UVision, Tekever, new entrants with manufacturing capability", exposed:"Traditional exquisite platform primes; MALE/HALE providers; long-cycle procurement systems", impact:8, likelihood:9, evidence:"FACT" },
+  { name:"Manufacturing Economics",   mechanism:"3D printing enabling forward field production (German AFE units: 60–80 FPV drones per containerized workshop). Commercial manufacturing techniques entering defense. LEAP targets 12 months concept-to-production vs. Eurodrone 15+ years.", timing:"2025–2028", benefits:"Tekever, Quantum Systems, Auterion, new entrants with commercial manufacturing DNA", exposed:"Aerospace-culture manufacturers unable to shift from precision to volume economics", impact:7, likelihood:8, evidence:"INFERENCE" },
+  { name:"EDIP and Sovereignty Push", mechanism:"EDIP 2026–2027: €1.47B (€122M for EU UAS supply chain). EDF 2026: €1B R&D (one quarter for critical tech including drone swarms). European Drone Defence Initiative (EDDI): first operational capabilities end 2026. Explicit political objective to reduce US/Israeli platform dependency.", timing:"2026–2030", benefits:"EU-headquartered UAS companies; Eurodrone consortium; European subsystem specialists", exposed:"Non-European incumbents (General Atomics, IAI, Elbit) as EDIP creates preference for European sourcing", impact:7, likelihood:7, evidence:"FACT" },
+  { name:"VC-Backed Dual-Use Entrants",mechanism:"EU defense tech VC investment: $5.2B in 2024 (record), $1.5B through Sept 2025 (50% above full 2024). Unicorns: Helsing (~$4.5B), Tekever (>$1.3B), Quantum Systems (~€3B). These companies bypass traditional primes' proprietary stacks with open, software-first approaches.", timing:"Underway — 2024 onward", benefits:"Helsing, Quantum Systems, Tekever, Auterion and next-wave defense tech startups", exposed:"Traditional primes whose competitive advantage rests on procurement relationships rather than technical superiority", impact:8, likelihood:9, evidence:"FACT + INFERENCE" },
+  { name:"Doctrine Change",           mechanism:"Shift from exquisite platforms to mass explicitly adopted by LEAP founding nations (UK, France, Germany, Italy, Poland). 'Build first, perfect later' doctrine. NATO 2025 allied doctrine framework explicitly endorses mass attritable approach.", timing:"2025–2027", benefits:"Manufacturers with volume production capability; EU specialists; MBDA, Rheinmetall-UVision, Helsing", exposed:"Long-cycle, high-specification programs; industrial players dependent on exquisite platform economics", impact:8, likelihood:8, evidence:"FACT" }
+];
+
+const UAS_CONSTRAINTS = [
+  { name:"Procurement Timelines",         desc:"European defense acquisition cycles run 10–15+ years from concept to operational deployment. Eurodrone: concept mid-2010s to operational 2030. Even rapid procurement (Poland TB2) took 3 years.",          severity:"Critical",   sev_s:4,   type:"Structural",  mitigation:"LEAP initiative (12-month target), EDIP/EDIRPA, government-to-government models", evidence:"FACT" },
+  { name:"Fragmented European Demand",    desc:"27 EU member states + Norway = 28 independent procurement systems. ~1% of defense transactions under EU Defence Procurement Directive. Each nation negotiates C2, integration, training, sustainment separately.", severity:"Critical",   sev_s:4,   type:"Structural",  mitigation:"EDIP consolidation aim; OCCAR for multilateral programs; EDA joint procurement (18+ states for C-UAS)", evidence:"FACT" },
+  { name:"ITAR / Export Control Dependency",desc:"Any US-origin component triggers ITAR compliance. MTCR restricts UAS exports. Wassenaar controls dual-use components. France sought 'dis-ITAR-isation' for Eurodrone.", severity:"High",       sev_s:3,   type:"Structural",  mitigation:"EU indigenous component development (EDIP €122M for UAS supply chain); Eurodrone designed to minimize US components", evidence:"FACT" },
+  { name:"Non-European Component Dependency",desc:"US, Israel, China, Turkey control >90% of military UAV exports globally. Semiconductors (Taiwan/Korea/US) and rare-earth elements (China) are critical single points of failure.", severity:"High",       sev_s:3,   type:"Structural",  mitigation:"Eurodrone and Falco Xplorer as EU alternatives (long timelines); EDIP supply chain funding; 3D printing reducing some dependencies", evidence:"FACT" },
+  { name:"Certification / Airworthiness Gaps",desc:"No unified European military airworthiness authority. STANAG 4671 covers 150–20,000 kg but certification remains national. UK Protector was first large UAV to achieve military type certificate (May 2025).", severity:"High",       sev_s:3,   type:"Structural",  mitigation:"EMAR harmonization ongoing; UK MTC precedent; lower certification burden for expendable systems (no airworthiness for munitions)", evidence:"FACT" },
+  { name:"EW Vulnerability",              desc:"GPS jamming/denial, SATCOM spoofing, and RF interference demonstrated in Ukraine, Baltic, and contested environments. Most European military UAS depend on GPS and SATCOM.", severity:"High",       sev_s:3,   type:"Operational", mitigation:"AI-based GPS-independent navigation (Helsing terrain-map AI); INS/IMU fallback; EW-hardened datalinks", evidence:"FACT + INFERENCE" },
+  { name:"Budget Competition (Manned)",   desc:"Eurofighter, Rafale, F-35 acquisition and sustainment consume the largest share of air force budgets. UAS competes for the same envelope with weaker institutional constituencies.", severity:"Medium-High", sev_s:2.5, type:"Structural",  mitigation:"Dedicated UAS budget lines (France LPM €5B); Sondervermögen; LEAP creates separate funding channel", evidence:"INFERENCE" },
+  { name:"Manufacturing Scale Gap",       desc:"Europe lacks mass-production capability for attritable systems. Ukraine produces ~1.5M FPV/year. Scaling to MBDA 1,000/month target requires new manufacturing infrastructure not yet built.", severity:"Medium-High", sev_s:2.5, type:"Structural",  mitigation:"MBDA building capacity; Tekever UK factory; Baykar Piaggio Italy; 3D printing and modular design", evidence:"FACT + INFERENCE" },
+  { name:"Integration Complexity",        desc:"Making diverse UAS (European and non-European) work within existing C4ISR architectures across multiple nations. Paper STANAG 4586 compliance ≠ operational interoperability.", severity:"Medium",     sev_s:2,   type:"Structural",  mitigation:"STANAG 4586 Edition 3; FCAS Combat Cloud (long-term); NATO DiBaX exercises", evidence:"FACT" },
+  { name:"Talent / Training Shortages",   desc:"NATO identifies personnel and training shortages across the alliance for UAS operations. AI specialists and autonomy engineers in short supply, competing with private sector.", severity:"Medium",     sev_s:2,   type:"Cyclical",    mitigation:"Simulation-based training, Auterion/Helsing hiring from commercial AI sector, national training programs expanding", evidence:"FACT" }
+];
+
+const UAS_KPIS = [
+  { name:"Cost per Effect",           def:"Total cost to achieve one mission-relevant outcome (target destroyed, area surveilled) including platform amortization, payload, munition, fuel, and support costs.", unit:"€ per effect",       why:"The single most important economic metric. Determines whether attritable beats exquisite and which segments are strategically dominant.",  bench:"FPV: ~€2,500/effect. Loitering munition: €10–100K/effect. MALE ISR sortie: >>€100K/effect. Strike/UCAV: €500K–1M+/effect (estimated).",     diff:"High",       evidence:"FACT (FPV) + INFERENCE (MALE/Strike)" },
+  { name:"Production Surge Capacity", def:"Maximum units per month producible at full manufacturing mobilization.", unit:"Units/month",          why:"Determines whether a nation can sustain drone operations in prolonged conflict. Ukraine demonstrated that volume production is a strategic capability in itself.", bench:"Europe MALE: <5/month (not yet in production). Ukraine FPV: ~125K/month. MBDA OWE target: 1,000/month. Tekever AR3: scaling with new UK factory.", diff:"Medium",     evidence:"FACT" },
+  { name:"Time to Operational Capability",def:"Months from contract signature or programme decision to first operational deployment by armed forces.", unit:"Months",              why:"Measures procurement system responsiveness. Speed to field is itself a competitive advantage in a fast-moving threat environment.", bench:"Eurodrone: ~180 months. Poland TB2: ~36 months. LEAP target: 12–18 months. UK Protector: ~72 months.",                                        diff:"Low",        evidence:"FACT" },
+  { name:"Autonomy Readiness Level",   def:"Degree of autonomous operation achievable without continuous human control — Level 1 (remote piloted) to Level 5 (fully autonomous mission execution).", unit:"Level 1–5 scale",      why:"Determines operational value in GPS-denied and SATCOM-degraded environments. Also drives the valuation of software/AI companies.",  bench:"Most EU military UAS: Level 2–3 (human on the loop). Helsing HX-2: approaching Level 4. FCAS Remote Carriers: targeting Level 4–5 (2035+).", diff:"High",       evidence:"INFERENCE" },
+  { name:"Interoperability Score",     def:"STANAG 4586 compliance level AND demonstrated multi-national operational interoperability — not just paper compliance.", unit:"Compliance level + demo", why:"NATO effectiveness depends on UAS from different nations working together. The gap between declared and demonstrated is a strategic risk.", bench:"STANAG 4586 compliance declared by most NATO UAS operators. Demonstrated interoperability: limited to specific bilateral exercises.",           diff:"High",       evidence:"FACT + INFERENCE" },
+  { name:"Lifecycle Cost Ratio",       def:"Total lifecycle cost (acquisition + sustainment + MRO + training + disposal) divided by initial acquisition cost.", unit:"Ratio (e.g. 3:1)",    why:"Reveals the true economic burden of a platform. For MALE/HALE, sustainment is 2–3× acquisition. For attritable, ratio approaches 1:1. Shapes which business models work.", bench:"MALE/HALE: estimated 2–3× (based on manned aircraft analogues and Heron TP/MQ-9 contracts). Attritable: ~1:1. Tactical: estimated 1.5–2×.", diff:"High",       evidence:"ASSUMPTION" },
+  { name:"EW Survivability Rate",      def:"Percentage of missions completed successfully in electronic warfare contested environments (GPS jamming, SATCOM denial, RF interference).", unit:"Percentage",          why:"Determines real-world operational utility. A platform unable to operate under EW conditions has limited value in peer/near-peer conflict.", bench:"No public European benchmarks. Most legacy platforms: low EW survivability (INFERENCE). Helsing HX-2 and AI-navigated systems designed for high survivability. Ukraine data exists but classified.", diff:"Very High",   evidence:"INFERENCE" }
+];
+
+const UAS_ASSUMPTIONS = [
+  { name:"Defense Budget Sustainability",   stmt:"European defense budgets sustain above 2% GDP through 2030. EU-27 hit €381B (2.1% GDP) in 2025. Germany Sondervermögen (€500B) and France LPM (€413B 2024–2030) lock in near-term spending.", conf:"High",        conf_s:4,   why:"All growth projections depend on sustained spending. UAS procurement is discretionary relative to personnel and manned platform commitments.",       sens:"High",       sens_s:4, if_wrong:"UAS procurement slips; manned platforms and personnel costs win budget tradeoffs. Attritable/low-cost segments more resilient than MALE/HALE.", alt:"Recession or political shift drives budgets below 2%. Or NATO pressure pushes above 2.5% — accelerating all segments by 30–50%.", evidence:"FACT (current levels) + ASSUMPTION (sustainability)" },
+  { name:"Ukraine Conflict Urgency Continues",stmt:"The Ukraine conflict continues to drive urgency in European defense procurement through at least 2028. Battlefield lessons remain the primary catalyst for doctrinal and procurement change.", conf:"Medium-High", conf_s:3,   why:"Current procurement velocity (LEAP, EDIP, EDF) is directly linked to perceived Russian threat. Ceasefire could reduce urgency.",                  sens:"High",       sens_s:4, if_wrong:"Institutional momentum (EDIP, EDF, LEAP) may sustain velocity for 2–3 years post-ceasefire. But new program starts would slow.", alt:"Ceasefire by 2027 — urgency fades but institutional commitments sustain through 2029. Or escalation — European defense enters wartime procurement mode.", evidence:"INFERENCE" },
+  { name:"Autonomy Regulation Progresses by 2028",stmt:"Meaningful operational deployment of autonomous UAS in European armed forces by 2028. NATO/EU rules of engagement currently require human-in-the-loop for weapons release.", conf:"Medium",      conf_s:2.5, why:"AI/autonomy is the most important differentiator. If regulation lags, value of Helsing and Auterion is overstated.",                              sens:"Very High",   sens_s:5, if_wrong:"Autonomy restricted to navigation/ISR only. Value stays with traditional system integrators. Software/autonomy segment value overstated.", alt:"Autonomy advances fastest in expendable/attritable systems where certification burden is lower (no airworthiness for munitions).", evidence:"INFERENCE" },
+  { name:"European Industrial Consolidation Accelerates",stmt:"EU defense industry consolidation accelerates rather than stalls. EDIP aims to reduce fragmentation. Market-driven M&A (BAE–Malloy, Baykar–Piaggio) supplements policy.", conf:"Medium",      conf_s:2.5, why:"Fragmented industrial base limits scale economies. 27 nations and ~2,500 SMEs prevent efficient production.",                                       sens:"Medium-High", sens_s:3, if_wrong:"National sovereignty and juste retour politics prevent meaningful consolidation. Each multinational program adds complexity without reducing fragmentation.", alt:"Market-driven consolidation via M&A is faster than policy-driven. Startups achieve scale through VC funding rather than government consolidation.", evidence:"INFERENCE" },
+  { name:"US/Israeli Supplier Access Maintained",stmt:"US and Israeli defense companies maintain current level of EU market access. No major ITAR restrictions, export bans, or political disruptions to existing supply relationships.", conf:"Medium",      conf_s:2.5, why:"Germany's entire MALE ISR until 2030 depends on Israeli Heron TP lease. UK Protector is US-designed.",                                            sens:"High",       sens_s:4, if_wrong:"EU sovereignty programs (Eurodrone, Falco Xplorer) accelerate further. Short-term capability gaps emerge. EDIP receives emergency funding.", alt:"US political shift restricts ITAR approvals or Israeli supply disrupted by regional conflict. 3–5 year capability gap persists.", evidence:"FACT (current dependency) + ASSUMPTION (continuity)" },
+  { name:"Attritable Doctrine Adopted Within 3–5 Years",stmt:"European armed forces adopt mass attritable drone doctrine within 3–5 years, moving away from exclusive reliance on exquisite reusable platforms.", conf:"Medium",      conf_s:2.5, why:"Determines whether manufacturing scale investments (MBDA 1,000/month, Tekever factories) have a demand signal. Without doctrine shift, attritable market stays small.", sens:"High", sens_s:4, if_wrong:"MALE/HALE and traditional tactical platforms remain dominant. Loitering munitions stay niche. Manufacturing investment stalls.", alt:"Ukraine lessons are compelling but peacetime militaries may resist cultural shift from quality to quantity. Northern/Eastern Europe likely faster.", evidence:"INFERENCE" },
+  { name:"FCAS Programme Survives to 2030",stmt:"FCAS survives in some form through 2030 despite current difficulties. Phase 2 negotiations between Airbus/Dassault may reshape scope but remote carrier concept persists.", conf:"Low-Medium",  conf_s:1.5, why:"FCAS is the €100B+ anchor for European next-gen air combat including autonomous remote carriers and Combat Cloud.",                                  sens:"Medium",     sens_s:2.5, if_wrong:"National programmes replace FCAS. France pursues post-nEUROn stealth drone independently. The common Combat Cloud concept is lost or significantly delayed.", alt:"FCAS may survive as a technology framework even if the manned fighter component is restructured. Remote carriers could continue under a different structure.", evidence:"FACT (current difficulties) + INFERENCE (viability)" }
+];
+
+const UAS_FORECAST = {
+  labels:  ["2020","2021","2022","2023","2024","2025","2026","2027","2028","2029","2030"],
+  actual:  [193,   214,   240,   290,   343,   381,   null,  null,  null,  null,  null],
+  base:    [null,  null,  null,  null,  null,  381,   411,   444,   479,   517,   559],
+  upside:  [null,  null,  null,  null,  null,  381,   440,   490,   545,   600,   660],
+  downside:[null,  null,  null,  null,  null,  381,   385,   395,   405,   415,   425],
+  scenarios: {
+    base:     { label:"Base Case (→)", gdp:"EU-27 defense spending sustains ~2.0–2.2% GDP", uas:"UAS grows at ~15% CAGR 2025–2030", drivers:"Ukraine urgency sustained; EDIP/EDF execute on time; autonomy regulation progresses moderately", risks:"Procurement fragmentation persists; FCAS continues to struggle; EU-US supply dependencies unresolved", watch:"LEAP delivery 2027; Eurodrone CDR progress; Helsing HX-2 production volumes", evidence:"INFERENCE" },
+    upside:   { label:"Upside Case (↑)", gdp:"NATO-driven convergence pushes EU-27 above 2.5% GDP", uas:"UAS grows at ~25% CAGR 2025–2030 — attritable segment dominant", drivers:"Russia escalation; US disengagement accelerates EU sovereignty investment; autonomy regulation fast-tracked for military use", risks:"Industrial capacity constraints become binding bottleneck at high growth rate", watch:"German Zeitenwende execution; French LPM adherence; EU defense budget emergency provisions", evidence:"INFERENCE" },
+    downside: { label:"Downside Case (↓)", gdp:"Economic recession or political shift drives EU defense below 2% GDP", uas:"UAS market stagnates; MALE/HALE programs slip or are cancelled", drivers:"Ukraine ceasefire reduces urgency; fiscal pressure forces cuts; autonomy regulation stalls", risks:"Structural constraints remain unresolved; European industrial base lacks scale for attritable production", watch:"Italian and Spanish defense budget adherence; FCAS Phase 2 outcome; German coalition stability", evidence:"INFERENCE" }
+  }
+};
+
+const UAS_SOURCES = [
+  { num:1,  tier:"1", org:"European Defence Agency",          title:"EDA Annual Report 2024",                         date:"2025",     url:"https://eda.europa.eu/publications-and-data/all-publications/annual-report-2024",                    purpose:"EU-27 defense spending (€343B in 2024, +19% YoY), M2UAS program, EDA capability priorities" },
+  { num:2,  tier:"1", org:"European Defence Agency",          title:"EDA Capability Development Plan 2035+",          date:"2024",     url:"https://eda.europa.eu/docs/default-source/brochures/cdp-brochure---exploring-europe-s-capability-requirements-for-2035-and-beyond.pdf", purpose:"European capability gaps and priorities for UAS, autonomy, C-UAS through 2035" },
+  { num:3,  tier:"1", org:"SIPRI",                            title:"Yearbook 2025, Ch.7: Missiles and Armed UAVs",   date:"2025",     url:"https://www.sipri.org/yearbook/2025/07",                                                              purpose:"Global drone market oligopoly: US, Israel, China, Turkey control >90% of exports" },
+  { num:4,  tier:"1", org:"SIPRI",                            title:"Trends in International Arms Transfers 2024",    date:"Mar 2025", url:"https://www.sipri.org/sites/default/files/2025-03/fs_2503_at_2024_0.pdf",                             purpose:"European states tripled arms imports 2021–2025 (now 33% of global)" },
+  { num:5,  tier:"1", org:"European Commission / DG DEFIS",   title:"EDIP 2026–2027 Work Programme",                  date:"2025",     url:"https://defence-industry-space.ec.europa.eu/eu-defence-industry/edip-forging-europes-defence_en",     purpose:"€1.47B budget, €122M for UAS supply chain, €700M for anti-drone/ammunition support" },
+  { num:6,  tier:"1", org:"European Commission / DG DEFIS",   title:"EDF 2026 Work Programme",                        date:"Dec 2025", url:"https://defence-industry-space.ec.europa.eu/edf-work-programme-2026_en",                              purpose:"€1B for collaborative R&D, one quarter for critical technologies including drone swarms" },
+  { num:7,  tier:"1", org:"European Commission",              title:"Readiness Roadmap 2030",                         date:"2025",     url:"https://defence-industry-space.ec.europa.eu/eu-defence-industry/readiness-roadmap-2030_en",            purpose:"Flagship projects including European Drone Defence Initiative (EDDI), €800B 4-year commitment" },
+  { num:8,  tier:"1", org:"OCCAR",                            title:"MALE RPAS Programme Page",                       date:"Ongoing",  url:"https://www.occar.int/our-work/programmes/male-rpas-medium-altitude-long-endurance-remotely-piloted-aircraft-system", purpose:"Official Eurodrone data: €7.1B, 4 nations, 63 systems, timeline milestones" },
+  { num:9,  tier:"1", org:"NATO",                             title:"STANAG 4586 Technical Documentation",            date:"2012",     url:"https://publications.sto.nato.int/publications/STO%20Educational%20Notes/STO-EN-SCI-271/EN-SCI-271-03.pdf", purpose:"UCS interoperability standard — technical backbone of NATO UAS operations" },
+  { num:10, tier:"1", org:"NATO ACT",                         title:"NATO 2022 Strategic Concept",                    date:"2022",     url:"https://www.act.nato.int/wp-content/uploads/2023/05/290622-strategic-concept.pdf",                      purpose:"NATO strategic priorities for emerging technologies, AI, unmanned systems" },
+  { num:11, tier:"1", org:"French Ministry of Defence",       title:"LPM 2024–2030",                                  date:"2023",     url:"https://www.defense.gouv.fr/actualites/lpm-2024-2030-adapter-notre-outil-militaire-levolution-menaces", purpose:"€413.3B total, €5B for drone procurement, €10B innovation fund, drone swarm objective 2030" },
+  { num:12, tier:"1", org:"German Federal Government",        title:"Sondervermögen and 2026 Defence Budget",         date:"2025",     url:"https://atlasinstitute.org/germanys-path-to-kriegstuchtigkeit-the-2026-defence-budget/",                purpose:"€500B special fund, 8,300 UAS target by 2029, €10B UAS investment" },
+  { num:13, tier:"1", org:"UK Ministry of Defence",           title:"Defence Innovation Announcement",                date:"2025",     url:"https://www.gov.uk/government/news/rapid-140-million-boost-for-drone-and-counter-drone-tech-from-newly-formed-uk-defence-innovation", purpose:"£142M for drones/C-UAS, £4B for autonomous systems over 5 years" },
+  { num:14, tier:"1", org:"RAF",                              title:"Protector RG Mk1 Programme",                     date:"2025",     url:"https://www.raf.mod.uk/aircraft/current-aircraft/protector-rg-mk-1-mq-9b11/",                          purpose:"16 aircraft, first military type certificate for a large UAV (May 2025)" },
+  { num:15, tier:"2", org:"Airbus",                           title:"Eurodrone Programme Story",                      date:"Sep 2025", url:"https://www.airbus.com/en/newsroom/stories/2025-09-eurodrone-europes-sovereign-skies",                  purpose:"CDR entered Aug 2025, first flight mid-2027, service entry 2029 — authoritative programme timeline" },
+  { num:16, tier:"2", org:"Airbus",                           title:"FY 2024 Financial Results",                      date:"Feb 2025", url:"https://www.airbus.com/en/newsroom/press-releases/2025-02-airbus-reports-full-year-fy-2024-results",    purpose:"Defence & Space revenues €12.1B (+5% YoY), air power growth driver" },
+  { num:17, tier:"2", org:"Leonardo",                         title:"FY 2024 Results",                                date:"Mar 2025", url:"https://www.leonardo.com/en/press-release-detail/-/detail/11-03-2025-leonardo-board-of-directors-approves-fy2024-results-and-2025-guidance", purpose:"€17.8B revenues (+16.2% YoY), Falco Xplorer FOC 2026, UAS positioning" },
+  { num:18, tier:"2", org:"Rheinmetall",                      title:"FY 2024 Financial Report",                       date:"Mar 2025", url:"https://www.rheinmetall.com/en/media/news-watch/news/2025/03/2025-03-12-rheinmetall-financial-figures-fiscal-year-2024", purpose:"~€120M UAS revenue, €200M+ Hero backlog, Luna NG deliveries" },
+  { num:19, tier:"2", org:"BAE Systems",                      title:"2024 Annual Report",                             date:"2025",     url:"https://annualreport.baesystems.com/2024",                                                            purpose:"£28.3B sales (+14%), £77.8B backlog, Malloy/Callen-Lenz UAS acquisitions" },
+  { num:20, tier:"2", org:"SAAB",                             title:"Year-End Report 2024",                           date:"Feb 2025", url:"https://www.saab.com/globalassets/cision/documents/2025/20250207-saab-year-end-report-2024making-steady-progress-on-our-profitable-growth-journey-en-0-4984391.pdf", purpose:"GlobalEye operations, Skeldar status, counter-UAS contracts" },
+  { num:21, tier:"2", org:"Helsing",                          title:"Series D Funding Announcement",                  date:"2024",     url:"https://helsing.ai/newsroom/helsing-raises-eur600m-to-invest-in-european-technological-sovereignty",   purpose:"€600M raised, HX-2 programme, 6,000 units for Ukraine, FCAS AI contractor" },
+  { num:22, tier:"2", org:"Dassault Aviation",                title:"nEUROn Programme",                               date:"Ongoing",  url:"https://www.dassault-aviation.com/en/defense/neuron/introduction/",                                   purpose:"170+ test flights, European UCAV technology foundation, post-2030 stealth drone direction" },
+  { num:23, tier:"3", org:"Defense News",                     title:"Poland TB2 Final Delivery",                      date:"May 2024", url:"https://www.defensenews.com/unmanned/2024/05/17/poland-receives-final-tb2-drone-delivery-from-turkeys-baykar/", purpose:"Poland's $270M TB2 acquisition — first NATO/EU country to receive Turkish UCAVs" },
+  { num:24, tier:"3", org:"Defense News",                     title:"MBDA One-Way Effector",                          date:"Jun 2025", url:"https://www.defensenews.com/global/europe/2025/06/17/mbda-offers-cheap-drone-swarm-as-door-opener-for-its-pricey-missiles/", purpose:"1,000 units/month target, first flight autumn 2025, saturation tactics doctrine" },
+  { num:25, tier:"3", org:"DronExL",                          title:"Quantum Systems €210M FALKE Contract",           date:"Dec 2025", url:"https://dronexl.co/2025/12/12/quantum-systems-wins-246m-german-army-contract-as-thiels-reconnaissance-bet-pays-off/", purpose:"$246M for 520 FALKE systems — largest European specialist UAS contract" },
+  { num:26, tier:"3", org:"DronExL",                          title:"LEAP Programme Launch",                          date:"Feb 2026", url:"https://dronexl.co/2026/02/19/europes-e5-defense-ministers-drones-ukraine/",                           purpose:"UK, France, Germany, Italy, Poland — 'build first, perfect later' doctrine, 2027 deployment target" },
+  { num:27, tier:"3", org:"LSE Ideas",                        title:"Ukraine Drone Warfare Lessons",                  date:"Jun 2025", url:"https://blogs.lse.ac.uk/europpblog/2025/06/26/europe-nato-eu-has-much-to-learn-from-ukraines-drone-warfare-ecosystem/", purpose:"Ukraine's 1.5M FPV production, 500+ companies, 96.2% domestic supply — benchmark for EU scaling" },
+  { num:28, tier:"3", org:"MIT Technology Review",            title:"Europe's Autonomous Warfare Vision",             date:"Jan 2026", url:"https://www.technologyreview.com/2026/01/06/1129737/autonomous-warfare-europe-drones-defense-automated-kill-chains/", purpose:"FCAS status, autonomous kill chain development, European AI defense landscape" },
+  { num:29, tier:"3", org:"Army Recognition",                 title:"Baykar Piaggio Acquisition",                     date:"2025",     url:"https://www.armyrecognition.com/news/army-news/2025/turkish-company-baykar-to-produce-tb2-and-akinci-uavs-in-italy-after-acquiring-piaggio-aerospace/", purpose:"Turkish manufacturer establishing European production base — competitive landscape shift" },
+  { num:30, tier:"3", org:"McKinsey",                         title:"Military Aircraft Sustainment in Europe",        date:"2025",     url:"https://www.mckinsey.com/industries/aerospace-and-defense/our-insights/improving-military-aircraft-sustainment-to-strengthen-europes-defense", purpose:"Sustainment economics, MRO capacity constraints, lifecycle cost analysis" }
+];
+
+/* ============================================================
+   2. DATA REGISTRY
+   Maps user input to seeded datasets via keyword matching.
+============================================================ */
+
+const DATA_REGISTRY = {
+  uas_eu: {
+    id:       "uas_eu",
+    label:    "European Military UAS",
+    industry: "European military unmanned aerial systems (UAS)",
+    date:     "April 2026",
+    keywords: ["uas","unmanned aerial","drone","rpas","uav","military drone","military uas","defence drone","defense drone","eurodrone","unmanned system","aerial system","military unmanned","european military"],
+    data: {
+      exec:         UAS_EXEC,
+      segments:     UAS_SEGMENTS,
+      value_chain:  UAS_VALUE_CHAIN,
+      value_pools:  UAS_VALUE_POOLS,
+      competitors:  UAS_COMPETITORS,
+      disruption:   UAS_DISRUPTION,
+      constraints:  UAS_CONSTRAINTS,
+      kpis:         UAS_KPIS,
+      assumptions:  UAS_ASSUMPTIONS,
+      forecast:     UAS_FORECAST
+    },
+    sources: UAS_SOURCES
+  }
+};
+
+function detectDataset(input) {
+  const norm = input.toLowerCase().replace(/[^a-z0-9 ]/g, " ");
+  for (const ds of Object.values(DATA_REGISTRY)) {
+    for (const kw of ds.keywords) {
+      if (norm.includes(kw)) return ds;
+    }
+  }
+  return null;
+}
+
+/* ============================================================
+   3. FRAMEWORK TEMPLATES
+   Used in framework mode: analytical structure without data.
+============================================================ */
+
+const FW = {
+  executive_summary:      { purpose:"Synthesizes the most important findings into an executive-ready thesis and key insights.", qs:["What is the single most important thing to understand about this industry?","Is this industry structurally attractive — and for whom?","Where does value actually concentrate?","What are the top 3–5 findings an executive must act on?","What are the most critical uncertainties?"] },
+  industry_definition:    { purpose:"Establishes scope, segments the market meaningfully, and flags boundary ambiguity.", qs:["What is explicitly in scope and out of scope?","What are the meaningful segments — by mission, product type, or economic model?","Which segments are growing, which are stagnant, which are emerging?","What boundary ambiguity exists (dual-use, adjacent segments, geographic scope)?","Are any segments being conflated that have fundamentally different economics?"] },
+  value_chain:            { purpose:"Maps the end-to-end system from inputs to end customer, identifying players, dependencies, and bottlenecks.", qs:["What are the distinct steps from raw input to end customer?","Who are the key players at each node?","Where are the bottlenecks that slow the system down?","Where are the control points that allow value capture?","Which dependencies are structural vulnerabilities?"] },
+  value_pools:            { purpose:"Identifies where value is created versus where it is captured across the chain.", qs:["Which nodes have the highest revenue?","Which nodes have the highest margin — and are they the same nodes?","Where is value created but not captured by the creator?","What determines margin at each node (IP, regulation, switching costs, scale)?","Is there a structural mismatch between visible activity and actual value capture?"] },
+  competitive_landscape:  { purpose:"Maps the competitive structure: who plays, how they compete, where advantage comes from.", qs:["Who are the key players by segment?","What player types exist (integrated, specialist, software-led, non-domestic)?","On what dimensions do they compete (capability, cost, relationships, speed)?","Where is competitive advantage durable vs. transient?","Who is gaining ground and who is losing it?"] },
+  financials:             { purpose:"Analyses the financial economics of the industry — margin logic, capital intensity, working capital, and return profile.", qs:["What is the typical margin profile — and which segments or player types earn more or less?","How capital-intensive is the business — what drives capex and how does it affect returns?","What is the working capital dynamic — does the industry collect before or after it delivers?","Who earns the best returns and why — is it structural or temporary?","What does the financial health of major players tell you about competitive pressure?"] },
+  technology:             { purpose:"Distinguishes between the core technology needed to build the product/service and the enabling technology needed to run the business.", qs:["What core technology must a player master to be competitive in this industry?","What is the maturity of each critical technology — proven, developing, or experimental?","What technology enables the business to operate (not the product itself) — data systems, logistics tech, automation?","Where are the technology gaps that constrain performance or scale?","Which enabling technologies are table stakes vs. sources of differentiation?"] },
+  operations_supply_chain:{ purpose:"Maps the operating model — supply chain structure, sourcing geography, supplier concentration, and resilience.", qs:["What does the end-to-end supply chain look like from raw input to delivered product/service?","Which geographies are most critical — and what is the dependency risk?","Where are the supplier concentration risks — single-source, dual-source, or diversified?","What are the most binding operational bottlenecks?","Is the operating model fundamentally resilient or fragile — and what determines that?"] },
+  disruption:             { purpose:"Identifies forces that could restructure the industry — technology, economics, regulation, or doctrine.", qs:["What technologies are most likely to restructure how value is created or captured?","Who benefits from each disruption and who is exposed?","What is the timing — imminent, underway, or speculative?","Are any disruptions already happening faster than the industry acknowledges?","What would have to be true for each disruption to materialize?"] },
+  constraints:            { purpose:"Surfaces the forces limiting growth, profitability, speed, or competitive evolution.", qs:["What prevents this industry from growing faster?","Which constraints are structural (require systemic change) vs. cyclical (resolve over time)?","Which constraints are most binding — what do they slow or block?","Which segments are most exposed to each constraint?","What are the most plausible mitigation paths?"] },
+  kpis:                   { purpose:"Identifies the metrics that matter most for tracking performance, competitive position, and value creation.", qs:["What does good performance look like — and how do you measure it?","Which metrics tell you whether a company is actually competitive, not just large?","What are the current benchmarks for each KPI?","Which KPIs are hard to measure (and why)?","What segment-specific metrics exist that general metrics miss?"] },
+  assumptions:            { purpose:"Surfaces the hypotheses the analysis rests on and stress-tests them.", qs:["What must be true for the main thesis to hold?","How confident are we in each assumption?","What changes materially if each assumption is wrong?","Which assumptions have the highest sensitivity to outcomes?","What are the alternative scenarios if key assumptions fail?"] },
+  forecast:               { purpose:"Projects how the industry evolves under different conditions and what to monitor.", qs:["What is the base-case trajectory over the next 3–5 years?","What does the upside case require — and how plausible is it?","What does the downside case look like, and what are the early warning signals?","Which KPIs and assumptions should be monitored most closely?","What are the key inflection points that could shift the trajectory?"] }
+};
+
+/* ============================================================
+   4. UTILITY FUNCTIONS
+============================================================ */
+
+const charts = {}; // tracks live Chart.js instances for cleanup
+
+function killChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// Evidence badge rendering — reads the evidence_type field from data
+function ev(type) {
+  if (!type) return "";
+  let out = '<span class="badges">';
+  if (type.includes("FACT"))       out += '<span class="badge b-fact">FACT</span>';
+  if (type.includes("ASSUMPTION")) out += '<span class="badge b-assump">ASSUMPTION</span>';
+  if (type.includes("INFERENCE"))  out += '<span class="badge b-infer">INFERENCE</span>';
+  return out + "</span>";
+}
+
+function sevBadge(s) {
+  const m = {Critical:"b-critical", High:"b-high", "Medium-High":"b-med-high", Medium:"b-med"};
+  return `<span class="badge ${m[s]||"b-med"}">${s}</span>`;
+}
+function typBadge(t) {
+  const m = {Structural:"b-structural", Operational:"b-operational", Cyclical:"b-cyclical"};
+  return `<span class="badge ${m[t]||"b-structural"}">${t}</span>`;
+}
+function confBadge(c) {
+  const m = {High:"b-conf-h","Medium-High":"b-conf-mh",Medium:"b-conf-m","Low-Medium":"b-conf-lm"};
+  return `<span class="badge ${m[c]||"b-conf-m"}">${c}</span>`;
+}
+function ptyBadge(t) {
+  if (t.includes("AI/Software"))  return `<span class="badge b-ai">${t}</span>`;
+  if (t.includes("Prime"))        return `<span class="badge b-prime">${t}</span>`;
+  if (t.includes("Specialist"))   return `<span class="badge b-specialist">${t}</span>`;
+  if (t.includes("Non-European")) return `<span class="badge b-noneur">${t}</span>`;
+  return `<span class="badge b-subsys">${t}</span>`;
+}
+function growthBadge(g) {
+  const gl = g.toLowerCase();
+  if (gl.includes("explosive"))    return `<span class="badge b-explosive">Explosive</span>`;
+  if (gl.includes("very strong"))  return `<span class="badge b-strong">Very Strong</span>`;
+  if (gl.includes("strong"))       return `<span class="badge b-strong">Strong</span>`;
+  if (gl.includes("emerging"))     return `<span class="badge b-emerging">Emerging</span>`;
+  return `<span class="badge b-moderate">Moderate</span>`;
+}
+function depClass(d) {
+  return {High:"vc-dep-h", Medium:"vc-dep-m", Low:"vc-dep-l"}[d] || "vc-dep-na";
+}
+
+// Section header
+function sh(n, title) {
+  return `<div class="sec-header"><span class="sec-num">${String(n).padStart(2,"0")}</span><h2 class="sec-title">${title}</h2></div>`;
+}
+
+// Framework intro box with research questions
+function fwIntro(key, industryLabel) {
+  const t = FW[key];
+  if (!t) return "";
+  return `<div class="fw-intro">
+    <div class="fw-title">Research Required — ${industryLabel}</div>
+    <div class="fw-desc">${t.purpose}</div>
+    <ul class="fw-qs">${t.qs.map(q=>`<li>${q}</li>`).join("")}</ul>
+  </div>`;
+}
+
+// Placeholder card grid for framework mode
+function phCards(count, label) {
+  return `<div class="ga">${Array(count).fill(0).map(()=>`<div class="ph-card">
+    <div class="ph-line s"></div><div class="ph-line f"></div><div class="ph-line m"></div>
+    <div class="ph-label">${label}</div>
+  </div>`).join("")}</div>`;
+}
+
+// Empty chart placeholder for framework mode
+function emptyChart(label) {
+  return `<div class="chart-box"><div class="empty-chart"><span style="font-size:20px;opacity:.4">◫</span><span>${label}</span></div></div>`;
+}
+
+/* ============================================================
+   5. LIVE MODE HELPERS
+   Score derivation from text values — used by live renderers
+   to produce visual indicators without fabricated numbers.
+============================================================ */
+
+function sevScore(s)   { return {Critical:4,High:3,"Medium-High":2.5,Medium:2}[s]||2; }
+function sensScore(s)  { return {"Very High":5,High:4,Medium:3,Low:2}[s]||3; }
+function marginScore(m){ return {"Very High":9,High:7,"Medium-High":6,Medium:5,"Medium-Low":4,Low:2}[m]||5; }
+function liveMarginCol(m){
+  return {"Very High":"#0f2240","High":"#1a56db","Medium-High":"#3b82f6",
+          "Medium":"#94a3b8","Medium-Low":"#cbd5e0","Low":"#e2e8f0"}[m]||"#94a3b8";
+}
+function revScore(s){
+  const l=(s||"").toLowerCase();
+  if(l.includes("very high"))return 10;
+  if(l.includes("growing rapidly")||l.includes("very strong"))return 8;
+  if(l.includes("high"))return 8; if(l.includes("strong"))return 7;
+  if(l.includes("growing"))return 6; if(l.includes("medium"))return 5;
+  if(l.includes("low")||l.includes("declining"))return 3;
+  return 5;
+}
+
+function healthScore(h)   { return {Strong:3,Stable:2,Stressed:1}[h]||2; }
+function healthCol(h)     { return {Strong:"#059669",Stable:"#1a56db",Stressed:"#dc2626"}[h]||"#94a3b8"; }
+function maturityBadge(m) {
+  const map = {Mature:"b-conf-h",Developing:"b-conf-mh",Emerging:"b-conf-m",Experimental:"b-conf-lm"};
+  return `<span class="badge ${map[m]||"b-conf-m"}">${m||""}</span>`;
+}
+function importanceBadge(i) {
+  const map = {Critical:"b-critical",High:"b-high",Medium:"b-med-high"};
+  return `<span class="badge ${map[i]||"b-med"}">${i||""}</span>`;
+}
+function depBadge(d) {
+  const map = {Critical:"dep-critical",High:"dep-high",Medium:"dep-medium",Low:"dep-low"};
+  return `<span class="dep-badge ${map[d]||"dep-medium"}">${d||""}</span>`;
+}
+function bnBorderCol(s) { return {Critical:"#dc2626",High:"#ea580c",Medium:"#d97706"}[s]||"#d97706"; }
+
+/* ============================================================
+   6. SECTION RENDERERS
+   Each renderer: (container: HTMLElement, report: object) → void
+   Handles modes: 'seeded' | 'live' | 'framework' | 'error'
+============================================================ */
+
+// Shared error section renderer
+function renderErrorSection(el, num, title) {
+  el.innerHTML = sh(num, title) +
+    `<div class="fw-intro" style="border-color:#fecaca;background:#fef2f2">
+      <div class="fw-title" style="color:#991b1b">Analysis unavailable for this section</div>
+      <div class="fw-desc" style="color:#7f1d1d">The backend returned an error. Check the server is running and the API key is set.</div>
+    </div>`;
+}
+
+// ── Executive Summary ────────────────────────────────────────
+function renderExecSummary(el, r) {
+  if (r.mode === "error")     { renderErrorSection(el, 1, "Executive Summary"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(1,"Executive Summary") + fwIntro("executive_summary", r.label) +
+      `<div class="g4 mb-18">${["Industry Attractiveness","Main Value Pool","Biggest Constraint","Core KPI"].map(l=>`
+        <div class="kpi-card"><div class="kpi-label">${l}</div>
+          <div class="kpi-value" style="color:#cbd5e0">—</div>
+          <div class="kpi-sub" style="color:#e2e8f0">Populate with research data</div>
+        </div>`).join("")}</div>` + phCards(3, "Key insight — requires research");
+    return;
+  }
+  // Normalise data: live uses r.sections.executive_summary, seeded uses r.data.exec
+  const d = r.mode === "live" ? r.sections.executive_summary : r.data.exec;
+  el.innerHTML = sh(1,"Executive Summary") +
+    `<div class="g4 mb-18">${d.kpi_cards.map(c=>`
+      <div class="kpi-card">
+        <div class="kpi-label">${c.label}</div>
+        <div class="kpi-value">${c.value}</div>
+        <div class="kpi-sub">${c.sub}</div>
+      </div>`).join("")}</div>
+    <div class="thesis mb-18"><div class="thesis-label">Thesis</div><p>${d.thesis}</p></div>
+    <h3 class="mb-10">Key Insights</h3>
+    <ul class="insight-list">${d.insights.map((ins,i)=>`
+      <li class="insight-item">
+        <span class="i-num">${String(i+1).padStart(2,"0")}</span>
+        <span class="i-text">${ins}</span>
+      </li>`).join("")}</ul>`;
+}
+
+function renderIndustryDef(el, r) {
+  const cid = "c-segments";
+  killChart(cid);
+  if (r.mode === "error")     { renderErrorSection(el, 2, "Industry Definition"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(2,"Industry Definition") + fwIntro("industry_definition", r.label) +
+      `<div class="scope-box">
+        <div class="scope-in"><div class="scope-label">In Scope</div><div class="scope-text" style="color:#cbd5e0">Define what is explicitly included</div></div>
+        <div class="scope-out"><div class="scope-label">Out of Scope</div><div class="scope-text" style="color:#cbd5e0">Define what is explicitly excluded</div></div>
+       </div>` + phCards(4,"Segment — requires research") + emptyChart("Segment strategic importance — requires data");
+    return;
+  }
+  if (r.mode === "live") {
+    const def = r.sections.industry_definition;
+    el.innerHTML = sh(2,"Industry Definition") +
+      `<div class="scope-box mb-18">
+        <div class="scope-in"><div class="scope-label">In Scope</div><div class="scope-text">${def.scope_in}</div></div>
+        <div class="scope-out"><div class="scope-label">Out of Scope</div><div class="scope-text">${def.scope_out}</div></div>
+      </div>
+      ${def.boundary_notes ? `<div class="fw-intro mb-18" style="background:#f0f9ff;border-color:#bae6fd"><div class="fw-title" style="color:#0c4a6e">Boundary Notes</div><div class="fw-desc" style="color:#0c4a6e">${def.boundary_notes}</div></div>` : ""}
+      <h3 class="mb-10">Market Segments</h3>
+      <div class="ga">${def.segments.map(s=>`
+        <div class="seg-card">
+          <div class="row"><div class="seg-name">${s.name}</div>${growthBadge(s.growth)}</div>
+          <div class="seg-desc">${s.desc}</div>
+          <div class="seg-meta">
+            <span class="seg-tag">${s.importance_lbl} importance</span>
+          </div>
+          <div class="t-muted mt-10" style="font-size:11px">Players: ${s.players}</div>
+          <div class="mt-10">${ev(s.evidence)}</div>
+        </div>`).join("")}</div>`;
+    return;
+  }
+  const segs = r.data.segments;
+  el.innerHTML = sh(2,"Industry Definition") +
+    `<div class="scope-box mb-18">
+      <div class="scope-in">
+        <div class="scope-label">In Scope</div>
+        <div class="scope-text">Military UAS designed, procured, operated, or deployed by European armed forces — including platforms, subsystems, software, payloads, ground control stations, datalinks, sustainment, and the procurement and industrial policy frameworks that shape the market.</div>
+      </div>
+      <div class="scope-out">
+        <div class="scope-label">Out of Scope</div>
+        <div class="scope-text">Purely commercial/civilian drones, space-based systems, unmanned ground/maritime vehicles (except where they interface with UAS C2), and non-European defense markets except where they directly supply European forces.</div>
+      </div>
+    </div>
+    <h3 class="mb-10">Market Segments</h3>
+    <div class="ga mb-18">${segs.map(s=>`
+      <div class="seg-card">
+        <div class="row"><div class="seg-name">${s.name}</div>${growthBadge(s.growth)}</div>
+        <div class="seg-desc">${s.desc}</div>
+        <div class="seg-meta">
+          <span class="seg-tag">${s.size}</span>
+          <span class="seg-tag">${s.expendable}</span>
+          <span class="seg-tag">${s.importance_lbl} importance</span>
+        </div>
+        <div class="seg-players t-muted mt-10">Players: ${s.players}</div>
+        <div class="mt-10">${ev(s.evidence)}</div>
+      </div>`).join("")}</div>
+    <div class="chart-box">
+      <div class="chart-ttl">Strategic Importance by Segment (Score 1–10)</div>
+      <div class="chart-sub">Judgmental assessment based on mission criticality, value pool size, and future positioning. INFERENCE.</div>
+      <canvas id="${cid}" height="110"></canvas>
+    </div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"bar",
+      data:{ labels: segs.map(s=>s.name), datasets:[{ data: segs.map(s=>s.importance), backgroundColor: segs.map(s=>s.importance>=9?"#0f2240":s.importance>=7?"#1a56db":"#94a3b8"), borderRadius:3, barThickness:16 }] },
+      options:{ indexAxis:"y", plugins:{ legend:{ display:false } }, scales:{ x:{ min:0, max:10, grid:{ color:"#f0f2f5" }, ticks:{ font:{ size:11 } } }, y:{ grid:{ display:false }, ticks:{ font:{ size:11 } } } } }
+    });
+  }, 50);
+}
+
+function renderValueChain(el, r) {
+  if (r.mode === "error")     { renderErrorSection(el, 3, "Value Chain"); return; }
+  if (r.mode === "framework") {
+    const ph = Array(7).fill(0).map((_,i,a)=>`<div class="vc-node"><div class="vc-box" style="background:var(--bg-page);border-style:dashed"><div class="vc-name" style="color:#cbd5e0">Step ${i+1}</div></div></div>${i<a.length-1?'<div class="vc-arrow">→</div>':""}`).join("");
+    el.innerHTML = sh(3,"Value Chain") + fwIntro("value_chain", r.label) + `<div class="vc-flow">${ph}</div>` + phCards(3,"Node detail — requires research");
+    return;
+  }
+  // Live mode: add synthetic IDs so toggleVc works
+  if (r.mode === "live") {
+    r.data = r.data || {};
+    r.data.value_chain = r.sections.value_chain.nodes.map((n,i)=>({
+      ...n, id:`LVC${String(i+1).padStart(2,"0")}`
+    }));
+  }
+  const nodes = r.data.value_chain;
+  const flow = nodes.map((n,i)=>`
+    <div class="vc-node">
+      <div class="vc-box" onclick="toggleVc('${n.id}')">
+        <div class="vc-n">${String(i+1).padStart(2,"0")}</div>
+        <div class="vc-name">${n.name}</div>
+        <div class="vc-dep ${depClass(n.dep)}">${n.dep==="N/A"?"N/A":n.dep+" dep."}</div>
+      </div>
+    </div>${i<nodes.length-1?'<div class="vc-arrow">→</div>':""}`).join("");
+  const details = nodes.map(n=>`
+    <div id="vcd-${n.id}" class="vc-detail">
+      <div class="row mb-10">
+        <div><h4 style="color:var(--navy);margin-bottom:3px">${n.name}</h4><div class="t-small t-muted">${n.desc}</div></div>
+        ${ev(n.evidence)}
+      </div>
+      <div class="g3">
+        <div><div class="kpi-label">Key Players</div><div class="t-small">${n.players}</div></div>
+        <div><div class="kpi-label">Bottlenecks</div><div class="t-small">${n.bottleneck}</div></div>
+        <div><div class="kpi-label">Non-EU Dependency</div><div class="t-small"><strong>${n.dep}</strong> — ${n.dep_notes}</div></div>
+      </div>
+      <div class="mt-10"><div class="kpi-label">Control Points</div><div class="t-small">${n.control}</div></div>
+    </div>`).join("");
+  el.innerHTML = sh(3,"Value Chain") +
+    `<p class="mb-10 t-small">Click any node to expand. Non-EU dependency: <span class="vc-dep vc-dep-h" style="display:inline-block">High</span> = material vulnerability, <span class="vc-dep vc-dep-m" style="display:inline-block">Medium</span>, <span class="vc-dep vc-dep-l" style="display:inline-block">Low</span></p>
+    <div class="vc-flow">${flow}</div>
+    ${details}`;
+}
+
+function toggleVc(id) {
+  const el = document.getElementById("vcd-"+id);
+  if (el) el.classList.toggle("open");
+}
+
+function renderValuePools(el, r) {
+  const cid = "c-vp";
+  killChart(cid);
+  if (r.mode === "error")     { renderErrorSection(el, 4, "Value Pools"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(4,"Value Pools") + fwIntro("value_pools", r.label) + emptyChart("Value pool distribution — requires research data") + phCards(3,"Value pool — requires research");
+    return;
+  }
+  // Live mode: normalise pools and derive numeric scores for chart
+  if (r.mode === "live") {
+    r.data = r.data || {};
+    r.data.value_pools = r.sections.value_pools.pools.map(p=>({
+      ...p,
+      node: p.node, rev_dir: p.rev_dir, margin: p.margin,
+      capture: p.capture, dynamic: p.dynamic, evidence: p.evidence,
+      rev_s: revScore(p.rev_dir),
+      margin_s: marginScore(p.margin),
+      margin_col: liveMarginCol(p.margin)
+    }));
+  }
+  const pools = r.data.value_pools;
+  el.innerHTML = sh(4,"Value Pools") +
+    `<div class="chart-box mb-18">
+      <div class="chart-ttl">Revenue Scale vs. Margin Profile by Value Chain Node</div>
+      <div class="chart-sub">Revenue score = directional proxy (not precise market size). Margin score = judgmental 1–10. Both are INFERENCE.</div>
+      <canvas id="${cid}" height="95"></canvas>
+      <div class="chart-note">No exact margin data is available at this granularity. Scores reflect the pattern of value capture observed from procurement contracts and company financials.</div>
+    </div>
+    <div class="stack">${pools.map(p=>`
+      <div class="vp-item">
+        <div class="vp-bar-col">
+          <div class="vp-name">${p.node}</div>
+          <div class="vp-rev" style="color:${p.rev_s>=8?"var(--navy)":p.rev_s>=5?"var(--accent)":"var(--text-muted)"}">${p.rev_dir}</div>
+          <div class="vp-bar" style="width:${p.margin_s*10}%;background:${p.margin_col}"></div>
+          <div class="vp-ml">Margin: ${p.margin}</div>
+        </div>
+        <div class="vp-main">
+          <div class="vp-cap"><strong>Capture:</strong> ${p.capture}</div>
+          <div class="vp-dyn">${p.dynamic}</div>
+          <div class="mt-10">${ev(p.evidence)}</div>
+        </div>
+      </div>`).join("")}</div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"bar",
+      data:{ labels: pools.map(p=>p.node), datasets:[
+        { label:"Revenue Scale", data: pools.map(p=>p.rev_s), backgroundColor:"#dbeafe", borderRadius:2, barThickness:12 },
+        { label:"Margin Profile", data: pools.map(p=>p.margin_s), backgroundColor:"#0f2240", borderRadius:2, barThickness:7 }
+      ]},
+      options:{ indexAxis:"y", plugins:{ legend:{ position:"top", labels:{ font:{size:11}, boxWidth:12 } } }, scales:{ x:{ min:0, max:10, grid:{ color:"#f0f2f5" }, ticks:{ font:{size:11} } }, y:{ grid:{ display:false }, ticks:{ font:{size:11} } } } }
+    });
+  }, 50);
+}
+
+function renderCompetitive(el, r) {
+  const cid = "c-comp";
+  killChart(cid);
+  if (r.mode === "error")     { renderErrorSection(el, 5, "Competitive Landscape"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(5,"Competitive Landscape") + fwIntro("competitive_landscape", r.label) + emptyChart("Competitive positioning — requires research data") + phCards(4,"Player — requires research");
+    return;
+  }
+  // Live mode: enriched player cards with scale and capital position
+  if (r.mode === "live") {
+    const lp = r.sections.competitive_landscape.players;
+    el.innerHTML = sh(5,"Competitive Landscape") +
+      `<div class="ga">${lp.map(p=>`
+        <div class="comp-card">
+          <div class="row mb-0"><div class="comp-name">${p.name}</div>${ptyBadge(p.type||"")}</div>
+          <div class="comp-hq">${p.hq||""}</div>
+          ${(p.scale && p.scale !== "Not publicly disclosed") || (p.capital_position && p.capital_position !== "Not publicly disclosed") ? `
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:10px;flex-wrap:wrap">
+            ${p.scale && p.scale !== "Not publicly disclosed" ? `<span><strong>Scale:</strong> ${p.scale}</span>` : ""}
+            ${p.capital_position && p.capital_position !== "Not publicly disclosed" ? `<span><strong>Capital:</strong> ${p.capital_position}</span>` : ""}
+          </div>` : ""}
+          <div class="comp-seg mb-10"><strong>Focus:</strong> ${p.seg||""}</div>
+          <div style="font-size:11px;color:var(--text-sec);margin-bottom:7px"><strong>Advantage:</strong> ${p.adv||""}</div>
+          <div class="comp-mile">${p.mile||""}</div>
+          <div class="mt-10">${ev(p.evidence)}</div>
+        </div>`).join("")}</div>`;
+    return;
+  }
+  const players = r.data.competitors;
+  const types = [...new Set(players.map(p=>p.type))];
+  const typeColors = { "European Prime":"#1a56db","European Specialist":"#059669","AI/Software-Led":"#7c3aed","Non-European":"#ea580c","Subsystem / Prime":"#0891b2" };
+  el.innerHTML = sh(5,"Competitive Landscape") +
+    `<div class="chart-box mb-18">
+      <div class="chart-ttl">Competitive Positioning: Capability Breadth vs. Segment Specialization</div>
+      <div class="chart-sub">Judgmental positioning (1–10 scale). Hover for company names. INFERENCE.</div>
+      <div class="filter-row" id="comp-filters">
+        <button class="flt-btn active" data-filter="all">All</button>
+        ${types.map(t=>`<button class="flt-btn" data-filter="${t}">${t}</button>`).join("")}
+      </div>
+      <canvas id="${cid}" height="160"></canvas>
+      <div class="chart-note">Axis positions are judgmental proxies based on portfolio breadth and segment depth analysis, not revenue data.</div>
+    </div>
+    <div class="ga" id="comp-cards">${players.map(p=>`
+      <div class="comp-card" data-type="${p.type}">
+        <div class="row mb-0"><div class="comp-name">${p.name}</div>${ptyBadge(p.type)}</div>
+        <div class="comp-hq">${p.hq}</div>
+        <div class="comp-seg mb-10"><strong>Focus:</strong> ${p.seg}</div>
+        <div class="comp-mile">${p.mile}</div>
+        <div class="mt-10">${ev(p.evidence)}</div>
+      </div>`).join("")}</div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"scatter",
+      data:{ datasets: types.map(type=>({ label:type, data: players.filter(p=>p.type===type).map(p=>({x:p.bx,y:p.by,label:p.name})), backgroundColor:(typeColors[type]||"#94a3b8")+"cc", borderColor:typeColors[type]||"#94a3b8", pointRadius:7, pointHoverRadius:9 })) },
+      options:{ plugins:{ legend:{ position:"top", labels:{ font:{size:11}, boxWidth:12 } }, tooltip:{ callbacks:{ label:(c)=>`${c.raw.label} (${c.raw.x}, ${c.raw.y})` } } }, scales:{ x:{ min:0, max:10, title:{ display:true, text:"Capability Breadth →", font:{size:11} }, grid:{ color:"#f0f2f5" }, ticks:{ font:{size:10} } }, y:{ min:0, max:10, title:{ display:true, text:"Segment Specialization →", font:{size:11} }, grid:{ color:"#f0f2f5" }, ticks:{ font:{size:10} } } } }
+    });
+  }, 50);
+  setTimeout(()=>{
+    document.querySelectorAll("#comp-filters .flt-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll("#comp-filters .flt-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        const f = btn.dataset.filter;
+        document.querySelectorAll("#comp-cards .comp-card").forEach(c=>{
+          c.style.display = (f==="all"||c.dataset.type===f) ? "" : "none";
+        });
+      });
+    });
+  }, 100);
+}
+
+// ── Financials ───────────────────────────────────────────────
+function renderFinancials(el, r) {
+  const cid = "c-fin";
+  killChart(cid);
+  if (r.mode === "error") { renderErrorSection(el, 6, "Financials"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(6,"Financials") + fwIntro("financials", r.label) + phCards(4,"Financial dimension — requires research");
+    return;
+  }
+  const f = r.sections.financials;
+  const cards    = f.stat_cards || [];
+  const players  = f.player_financials || [];
+  const insights = f.insights || [];
+  const costs    = f.cost_structure || [];
+  const segs     = f.profitability_by_segment || [];
+  el.innerHTML = sh(6,"Financials") +
+    `<p class="mb-14 t-small">${f.overview||""}</p>
+    <div class="fin-cards">${cards.map(c=>`
+      <div class="fin-card">
+        <div class="fin-card-label">${c.label}</div>
+        <div class="fin-card-value">${c.value}</div>
+        <div class="fin-card-sub">${c.sub}</div>
+      </div>`).join("")}</div>
+    ${costs.length ? `
+    <h3 class="mb-10">Cost Structure</h3>
+    <div class="stack mb-18">${costs.map(c=>`
+      <div class="con-item">
+        <div class="con-rank" style="background:var(--navy);color:#fff;font-size:9px;padding:4px">${c.share||"—"}</div>
+        <div class="con-body">
+          <div class="con-name">${c.item}</div>
+          <div class="con-desc">${c.notes}</div>
+        </div>
+      </div>`).join("")}</div>` : ""}
+    ${segs.length ? `
+    <h3 class="mb-10">Profitability by Segment</h3>
+    <div class="ga mb-18">${segs.map(s=>`
+      <div class="fin-card">
+        <div class="fin-card-label">${s.segment}</div>
+        <div class="fin-card-value" style="font-size:13px">${s.margin_tier}</div>
+        <div class="fin-card-sub">${s.notes}</div>
+        <div class="mt-7">${ev(s.evidence)}</div>
+      </div>`).join("")}</div>` : ""}
+    ${f.valuation_context ? `
+    <h3 class="mb-10">Valuation Context</h3>
+    <div class="ops-resilience mb-18">${f.valuation_context}</div>` : ""}
+    ${players.length ? `
+    <h3 class="mb-10">Player Financial Profiles</h3>
+    <div class="chart-box mb-14">
+      <div class="chart-ttl">Financial Health by Player</div>
+      <div class="chart-sub">Directional assessment. ${ev("INFERENCE")} Exact figures may not be publicly available.</div>
+      <canvas id="${cid}" height="90"></canvas>
+    </div>
+    <div class="stack mb-18">${players.map(p=>`
+      <div class="con-item">
+        <div class="con-rank" style="background:${healthCol(p.health)};color:#fff">${p.health?p.health[0]:"?"}</div>
+        <div class="con-body">
+          <div class="con-name">${p.name}</div>
+          <div class="con-desc">${p.notes}</div>
+          <div class="con-meta" style="flex-wrap:wrap;gap:5px">
+            ${sevBadge(p.margin_tier||"Medium")}
+            ${p.scale ? `<span class="t-muted" style="font-size:10px">Scale: ${p.scale}</span>` : ""}
+            ${p.capital_position ? `<span class="t-muted" style="font-size:10px">${p.capital_position}</span>` : ""}
+            ${ev(p.evidence)}
+          </div>
+        </div>
+      </div>`).join("")}</div>` : ""}
+    ${insights.length ? `
+    <h3 class="mb-10">Key Financial Insights</h3>
+    <div class="fin-insights">${insights.map(i=>`<div class="fin-insight">${i}</div>`).join("")}</div>` : ""}
+    <div class="mt-14">${ev(f.evidence)}</div>`;
+  if (players.length) {
+    setTimeout(()=>{
+      const ctx = document.getElementById(cid);
+      if (!ctx) return;
+      charts[cid] = new Chart(ctx, {
+        type:"bar",
+        data:{ labels: players.map(p=>p.name), datasets:[{ data: players.map(p=>healthScore(p.health)), backgroundColor: players.map(p=>healthCol(p.health)), borderRadius:3, barThickness:14 }] },
+        options:{ indexAxis:"y", plugins:{ legend:{display:false} }, scales:{ x:{ min:0, max:3.5, grid:{color:"#f0f2f5"}, ticks:{ font:{size:10}, callback:v=>["","Stressed","Stable","Strong"][Math.round(v)]||"" } }, y:{ grid:{display:false}, ticks:{font:{size:11}} } } }
+      });
+    }, 50);
+  }
+}
+
+// ── Technology ───────────────────────────────────────────────
+function renderTechnology(el, r) {
+  if (r.mode === "error") { renderErrorSection(el, 7, "Technology"); return; }
+  if (r.mode === "framework") {
+    el.innerHTML = sh(7,"Technology") + fwIntro("technology", r.label) +
+      `<div class="tech-panel">
+        <div class="tech-panel-hdr"><span class="tech-panel-badge tech-badge-core">A — Core Technology</span><span class="tech-panel-summary">Technology required to build or deliver the product/service</span></div>
+        ${phCards(3,"Core technology — requires research")}
+      </div>
+      <div class="tech-panel">
+        <div class="tech-panel-hdr"><span class="tech-panel-badge tech-badge-enable">B — Enabling Technology</span><span class="tech-panel-summary">Technology required to operate the business effectively</span></div>
+        ${phCards(3,"Enabling technology — requires research")}
+      </div>`;
+    return;
+  }
+  const t = r.sections.technology;
+  const renderItems = items => items.map(i=>`
+    <div class="tech-item">
+      <div class="tech-item-name">${i.name}</div>
+      <div class="tech-item-desc">${i.desc}</div>
+      <div class="tech-item-meta">${maturityBadge(i.maturity)} ${importanceBadge(i.strategic_importance)} ${ev(i.evidence)}</div>
+    </div>`).join("");
+  el.innerHTML = sh(7,"Technology") +
+    `<div class="tech-panel">
+      <div class="tech-panel-hdr">
+        <span class="tech-panel-badge tech-badge-core">A — Core Technology</span>
+      </div>
+      <p class="mb-14 t-small">${t.core_tech.summary||""}</p>
+      <div class="tech-items">${renderItems(t.core_tech.items||[])}</div>
+    </div>
+    <div class="tech-panel">
+      <div class="tech-panel-hdr">
+        <span class="tech-panel-badge tech-badge-enable">B — Enabling Technology</span>
+      </div>
+      <p class="mb-14 t-small">${t.enabling_tech.summary||""}</p>
+      <div class="tech-items">${renderItems(t.enabling_tech.items||[])}</div>
+    </div>`;
+}
+
+// ── Operations / Supply Chain ─────────────────────────────────
+function renderOpsSupplyChain(el, r) {
+  if (r.mode === "error") { renderErrorSection(el, 8, "Operations / Supply Chain"); return; }
+  if (r.mode === "framework") {
+    const ph = Array(5).fill(0).map((_,i,a)=>`<div class="ops-node"><div class="ops-box" style="border-style:dashed"><div class="ops-name" style="color:#cbd5e0">Step ${i+1}</div></div></div>${i<a.length-1?'<div class="vc-arrow">→</div>':""}`).join("");
+    el.innerHTML = sh(8,"Operations / Supply Chain") + fwIntro("operations_supply_chain", r.label) +
+      `<div class="ops-flow">${ph}</div>` + phCards(3,"Supply chain step — requires research");
+    return;
+  }
+  const o = r.sections.operations_supply_chain;
+  const streams = o.stream_mapping || [];
+  const steps   = o.supply_chain_steps || [];
+  const geo     = o.sourcing_geography || [];
+  const bns     = o.bottlenecks || [];
+  const streamCol = {Upstream:"#0f2240",Midstream:"#1a56db",Downstream:"#059669"};
+  const diffCol   = {Commoditized:"#6b7280",Mixed:"#d97706",Differentiated:"#059669"};
+  const flow = steps.map((s,i)=>`
+    <div class="ops-node">
+      <div class="ops-box">
+        <div class="ops-n">${String(i+1).padStart(2,"0")}</div>
+        <div class="ops-name">${s.name}</div>
+        <div class="ops-geo">${s.geo||""}</div>
+        ${s.differentiated ? `<div style="font-size:8px;font-weight:700;margin-top:3px;color:${diffCol[s.differentiated]||"#6b7280"}">${s.differentiated}</div>` : ""}
+      </div>
+    </div>${i<steps.length-1?'<div class="vc-arrow">→</div>':""}`).join("");
+  el.innerHTML = sh(8,"Operations / Supply Chain") +
+    `<p class="mb-10 t-small">${o.overview||""}</p>
+    ${streams.length ? `
+    <h3 class="mb-10">Actor Mapping by Stream</h3>
+    <div class="stack mb-18">${streams.map(s=>`
+      <div class="con-item">
+        <div class="con-rank" style="background:${streamCol[s.stream]||"#1a56db"};color:#fff;font-size:9px;padding:4px;writing-mode:horizontal-tb">${s.stream}</div>
+        <div class="con-body">
+          <div class="con-name">${s.actors}</div>
+          <div class="con-desc">${s.activities}</div>
+          <div class="con-desc t-muted" style="font-style:italic;font-size:11px">${s.power_dynamics}</div>
+          <div class="con-meta">${ev(s.evidence)}</div>
+        </div>
+      </div>`).join("")}</div>` : ""}
+    ${steps.length ? `
+    <h3 class="mb-10">Supply Chain Steps</h3>
+    <div class="ops-flow">${flow}</div>
+    <div class="stack mb-18">${steps.map(s=>`
+      <div class="con-item">
+        <div class="con-body">
+          <div class="con-name">${s.name}
+            ${s.concentration ? `<span class="t-muted" style="font-size:10px;font-weight:400;margin-left:8px">Concentration: ${s.concentration}</span>` : ""}
+            ${s.differentiated ? `<span style="font-size:10px;font-weight:700;margin-left:8px;color:${diffCol[s.differentiated]||"#6b7280"}">${s.differentiated}</span>` : ""}
+          </div>
+          <div class="con-desc">${s.desc} <span class="t-muted">Key players: ${s.key_players}</span></div>
+          <div class="con-meta">${ev(s.evidence)}</div>
+        </div>
+      </div>`).join("")}</div>` : ""}
+    ${o.vertical_integration ? `
+    <h3 class="mb-10">Vertical Integration</h3>
+    <div class="ops-resilience mb-18">${o.vertical_integration}</div>` : ""}
+    ${geo.length ? `
+    <h3 class="mb-10">Sourcing Geography &amp; Dependencies</h3>
+    <table class="ops-geo-table mb-18">
+      <thead><tr><th>Region</th><th>Role</th><th>Dependency</th><th>Risk if Disrupted</th></tr></thead>
+      <tbody>${geo.map(g=>`<tr>
+        <td style="font-weight:600;color:var(--navy)">${g.region}</td>
+        <td>${g.role}</td>
+        <td>${depBadge(g.dependency)}</td>
+        <td>${g.risk}</td>
+      </tr>`).join("")}</tbody>
+    </table>` : ""}
+    ${bns.length ? `
+    <h3 class="mb-10">Operational Bottlenecks</h3>
+    <div class="ops-bottlenecks mb-18">${bns.map(b=>`
+      <div class="ops-bn" style="border-left-color:${bnBorderCol(b.severity)}">
+        <div class="ops-bn-name">${b.name} ${sevBadge(b.severity)} ${ev(b.evidence)}</div>
+        <div class="ops-bn-desc">${b.desc}</div>
+      </div>`).join("")}</div>` : ""}
+    ${o.resilience_notes ? `
+    <h3 class="mb-10">Resilience Assessment</h3>
+    <div class="ops-resilience">${o.resilience_notes}</div>` : ""}
+    <div class="mt-14">${ev(o.evidence)}</div>`;
+}
+
+function renderDisruption(el, r) {
+  const cid = "c-dis";
+  killChart(cid);
+  if (r.mode === "framework") {
+    el.innerHTML = sh(9,"Disruption") + fwIntro("disruption", r.label) + emptyChart("Impact-Likelihood matrix — requires research data") + phCards(3,"Disruption driver — requires research");
+    return;
+  }
+  // Live mode: driver cards only — no scatter chart (API returns no numeric impact/likelihood scores)
+  if (r.mode === "live") {
+    const ld = r.sections.disruption.drivers;
+    el.innerHTML = sh(9,"Disruption") +
+      `<div class="g2">${ld.map(d=>`
+        <div class="dis-card">
+          <div class="row mb-0"><div class="dis-name">${d.name}</div>${ev(d.evidence)}</div>
+          <div class="dis-timing t-muted mb-10">Timing: ${d.timing}</div>
+          <div class="dis-body">${d.mechanism}</div>
+          <div class="dis-split">
+            <div class="dis-benefit"><span class="dis-sl">Benefits</span>${d.benefits}</div>
+            <div class="dis-exposed"><span class="dis-sl">Exposed</span>${d.exposed}</div>
+          </div>
+        </div>`).join("")}</div>`;
+    return;
+  }
+  const drivers = r.data.disruption;
+  el.innerHTML = sh(9,"Disruption") +
+    `<div class="chart-box mb-22">
+      <div class="chart-ttl">Disruption Impact vs. Likelihood</div>
+      <div class="chart-sub">Each point = one disruption driver. Hover for label. Scores are judgmental. INFERENCE.</div>
+      <canvas id="${cid}" height="150"></canvas>
+    </div>
+    <div class="g2">${drivers.map(d=>`
+      <div class="dis-card">
+        <div class="row mb-0"><div class="dis-name">${d.name}</div>${ev(d.evidence)}</div>
+        <div class="dis-timing t-muted mb-10">Timing: ${d.timing}</div>
+        <div class="dis-body">${d.mechanism}</div>
+        <div class="dis-split">
+          <div class="dis-benefit"><span class="dis-sl">Benefits</span>${d.benefits}</div>
+          <div class="dis-exposed"><span class="dis-sl">Exposed</span>${d.exposed}</div>
+        </div>
+      </div>`).join("")}</div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"scatter",
+      data:{ datasets:[{ data: drivers.map(d=>({x:d.likelihood,y:d.impact,label:d.name})), backgroundColor: drivers.map(d=>d.impact>=8?"#0f2240cc":"#1a56dbcc"), pointRadius: drivers.map(d=>(d.impact+d.likelihood)*1.4), pointHoverRadius: drivers.map(d=>(d.impact+d.likelihood)*1.5) }] },
+      options:{ plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>`${c.raw.label} — Impact: ${c.raw.y}, Likelihood: ${c.raw.x}` } } }, scales:{ x:{ min:5, max:10, title:{display:true,text:"Likelihood →",font:{size:11}}, grid:{color:"#f0f2f5"}, ticks:{font:{size:10}} }, y:{ min:5, max:10, title:{display:true,text:"Impact →",font:{size:11}}, grid:{color:"#f0f2f5"}, ticks:{font:{size:10}} } } }
+    });
+  }, 50);
+}
+
+function renderConstraints(el, r) {
+  const cid = "c-con";
+  killChart(cid);
+  if (r.mode === "framework") {
+    el.innerHTML = sh(10,"Constraints") + fwIntro("constraints", r.label) + emptyChart("Constraint severity — requires research data") + phCards(3,"Constraint — requires research");
+    return;
+  }
+  // Live mode: derive sev_s from severity string via sevScore()
+  if (r.mode === "live") {
+    const lc = r.sections.constraints.constraints;
+    el.innerHTML = sh(10,"Constraints") +
+      `<div class="chart-box mb-18">
+        <div class="chart-ttl">Constraint Severity Ranking</div>
+        <div class="chart-sub">Ordered by severity. Color: red = Critical, orange = High, amber = Medium-High, grey = Medium.</div>
+        <canvas id="${cid}" height="105"></canvas>
+      </div>
+      <div class="stack">${lc.map((c,i)=>`
+        <div class="con-item">
+          <div class="con-rank">${String(i+1).padStart(2,"0")}</div>
+          <div class="con-body">
+            <div class="con-name">${c.name}</div>
+            <div class="con-desc">${c.desc}</div>
+            <div class="con-meta">${sevBadge(c.severity)} ${typBadge(c.type)} ${ev(c.evidence)}</div>
+            ${c.mitigation ? `<div class="t-muted" style="font-size:11px;margin-top:6px"><strong>Mitigation:</strong> ${c.mitigation}</div>` : ""}
+          </div>
+        </div>`).join("")}</div>`;
+    setTimeout(()=>{
+      const ctx = document.getElementById(cid);
+      if (!ctx) return;
+      charts[cid] = new Chart(ctx, {
+        type:"bar",
+        data:{ labels: lc.map(c=>c.name), datasets:[{ data: lc.map(c=>sevScore(c.severity)), backgroundColor: lc.map(c=>({Critical:"#dc2626",High:"#ea580c","Medium-High":"#d97706",Medium:"#6b7280"}[c.severity]||"#6b7280")), borderRadius:3, barThickness:14 }] },
+        options:{ indexAxis:"y", plugins:{ legend:{display:false} }, scales:{ x:{ min:0, max:4.5, grid:{color:"#f0f2f5"}, ticks:{ font:{size:10}, callback:v=>["","Low","Medium","High","Critical"][Math.round(v)]||"" } }, y:{ grid:{display:false}, ticks:{font:{size:11}} } } }
+      });
+    }, 50);
+    return;
+  }
+  const cons = r.data.constraints;
+  el.innerHTML = sh(10,"Constraints") +
+    `<div class="chart-box mb-18">
+      <div class="chart-ttl">Constraint Severity Ranking</div>
+      <div class="chart-sub">Ordered by severity. Color: red = Critical, orange = High, amber = Medium-High, grey = Medium.</div>
+      <canvas id="${cid}" height="105"></canvas>
+    </div>
+    <div class="stack">${cons.map((c,i)=>`
+      <div class="con-item">
+        <div class="con-rank">${String(i+1).padStart(2,"0")}</div>
+        <div class="con-body">
+          <div class="con-name">${c.name}</div>
+          <div class="con-desc">${c.desc}</div>
+          <div class="con-meta">${sevBadge(c.severity)} ${typBadge(c.type)} ${ev(c.evidence)}</div>
+        </div>
+      </div>`).join("")}</div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"bar",
+      data:{ labels: cons.map(c=>c.name), datasets:[{ data: cons.map(c=>c.sev_s), backgroundColor: cons.map(c=>({Critical:"#dc2626",High:"#ea580c","Medium-High":"#d97706",Medium:"#6b7280"}[c.severity]||"#6b7280")), borderRadius:3, barThickness:14 }] },
+      options:{ indexAxis:"y", plugins:{ legend:{display:false} }, scales:{ x:{ min:0, max:4.5, grid:{color:"#f0f2f5"}, ticks:{ font:{size:10}, callback:v=>["","Low","Medium","High","Critical"][Math.round(v)]||"" } }, y:{ grid:{display:false}, ticks:{font:{size:11}} } } }
+    });
+  }, 50);
+}
+
+function renderKPIs(el, r) {
+  if (r.mode === "framework") {
+    el.innerHTML = sh(11,"Key Performance Indicators") + fwIntro("kpis", r.label) + phCards(4,"KPI — requires research");
+    return;
+  }
+  // Live mode: same card layout, data from r.sections.kpis.kpis
+  if (r.mode === "live") {
+    const lk = r.sections.kpis.kpis;
+    el.innerHTML = sh(11,"Key Performance Indicators") +
+      `<p class="mb-14 t-small">Industry-specific KPIs only. Generic metrics (revenue growth, EBITDA) are excluded unless they carry distinct analytical weight for this industry.</p>
+      <div class="ga">${lk.map(k=>`
+        <div class="kpi-d-card">
+          <div class="kpi-d-name">${k.name}</div>
+          <div class="mb-10">${ev(k.evidence)}</div>
+          <div class="kpi-d-def">${k.def}</div>
+          <div class="kpi-bench"><div class="kpi-bl">Current Benchmark</div><div class="kpi-bv">${k.bench}</div></div>
+          <div class="kpi-why">"${k.why}"</div>
+          <div class="kpi-diff t-muted">Measurement difficulty: <strong>${k.diff}</strong></div>
+        </div>`).join("")}</div>`;
+    return;
+  }
+  const kpis = r.data.kpis;
+  el.innerHTML = sh(11,"Key Performance Indicators") +
+    `<p class="mb-14 t-small">Industry-specific KPIs only. Generic metrics (revenue growth, EBITDA) are excluded unless they carry distinct analytical weight for this industry.</p>
+    <div class="ga">${kpis.map(k=>`
+      <div class="kpi-d-card">
+        <div class="kpi-d-name">${k.name}</div>
+        <div class="mb-10">${ev(k.evidence)}</div>
+        <div class="kpi-d-def">${k.def}</div>
+        <div class="kpi-bench"><div class="kpi-bl">Current Benchmark</div><div class="kpi-bv">${k.bench}</div></div>
+        <div class="kpi-why">"${k.why}"</div>
+        <div class="kpi-diff t-muted">Measurement difficulty: <strong>${k.diff}</strong></div>
+      </div>`).join("")}</div>`;
+}
+
+function renderAssumptions(el, r) {
+  const cid = "c-asm";
+  killChart(cid);
+  if (r.mode === "framework") {
+    el.innerHTML = sh(12,"Key Assumptions") + fwIntro("assumptions", r.label) + emptyChart("Sensitivity ranking — requires research data") + phCards(3,"Assumption — requires research");
+    return;
+  }
+  // Live mode: derive sens_s from sens string via sensScore()
+  if (r.mode === "live") {
+    const la = r.sections.assumptions.assumptions;
+    el.innerHTML = sh(12,"Key Assumptions") +
+      `<p class="mb-14 t-small">Every conclusion rests on assumptions. These are the ones that matter most — ranked by sensitivity, with explicit confidence levels and stress-test scenarios.</p>
+      <div class="chart-box mb-18">
+        <div class="chart-ttl">Assumption Sensitivity Ranking</div>
+        <div class="chart-sub">Higher sensitivity = conclusion changes more if this assumption is wrong. Color = confidence level.</div>
+        <canvas id="${cid}" height="75"></canvas>
+      </div>
+      <div class="stack">${la.map(a=>`
+        <div class="asm-card">
+          <div class="row mb-0">
+            <div class="asm-name">${a.name}</div>
+            <div style="display:flex;gap:5px;flex-shrink:0">${confBadge(a.conf)} ${ev(a.evidence)}</div>
+          </div>
+          <div class="asm-stmt">${a.stmt}</div>
+          <div class="asm-grid">
+            <div class="asm-field"><div class="asm-fl">Why It Matters</div><div class="asm-fv">${a.why}</div></div>
+            <div class="asm-field"><div class="asm-fl">Sensitivity: ${a.sens}</div><div class="asm-fv">${a.if_wrong}</div></div>
+            <div class="asm-field" style="grid-column:1/-1"><div class="asm-fl">Alternative Scenario</div><div class="asm-fv">${a.alt}</div></div>
+          </div>
+        </div>`).join("")}</div>`;
+    setTimeout(()=>{
+      const ctx = document.getElementById(cid);
+      if (!ctx) return;
+      charts[cid] = new Chart(ctx, {
+        type:"bar",
+        data:{ labels: la.map(a=>a.name), datasets:[{ label:"Sensitivity", data: la.map(a=>sensScore(a.sens)), backgroundColor: la.map(a=>({High:"#059669","Medium-High":"#2563eb",Medium:"#d97706","Low-Medium":"#dc2626"}[a.conf]||"#d97706")), borderRadius:3, barThickness:14 }] },
+        options:{ indexAxis:"y", plugins:{ legend:{display:false} }, scales:{ x:{ min:0, max:5.5, grid:{color:"#f0f2f5"}, ticks:{ font:{size:10}, callback:v=>["","Low","Medium","Med-High","High","Very High"][Math.round(v)]||"" } }, y:{ grid:{display:false}, ticks:{font:{size:11}} } } }
+      });
+    }, 50);
+    return;
+  }
+  const asms = r.data.assumptions;
+  el.innerHTML = sh(12,"Key Assumptions") +
+    `<p class="mb-14 t-small">Every conclusion rests on assumptions. These are the ones that matter most — ranked by sensitivity, with explicit confidence levels and stress-test scenarios.</p>
+    <div class="chart-box mb-18">
+      <div class="chart-ttl">Assumption Sensitivity Ranking</div>
+      <div class="chart-sub">Higher sensitivity = conclusion changes more if this assumption is wrong. Color = confidence level.</div>
+      <canvas id="${cid}" height="75"></canvas>
+    </div>
+    <div class="stack">${asms.map(a=>`
+      <div class="asm-card">
+        <div class="row mb-0">
+          <div class="asm-name">${a.name}</div>
+          <div style="display:flex;gap:5px;flex-shrink:0">${confBadge(a.conf)} ${ev(a.evidence)}</div>
+        </div>
+        <div class="asm-stmt">${a.stmt}</div>
+        <div class="asm-grid">
+          <div class="asm-field"><div class="asm-fl">Why It Matters</div><div class="asm-fv">${a.why}</div></div>
+          <div class="asm-field"><div class="asm-fl">Sensitivity: ${a.sens}</div><div class="asm-fv">${a.if_wrong}</div></div>
+          <div class="asm-field" style="grid-column:1/-1"><div class="asm-fl">Alternative Scenario</div><div class="asm-fv">${a.alt}</div></div>
+        </div>
+      </div>`).join("")}</div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"bar",
+      data:{ labels: asms.map(a=>a.name), datasets:[{ label:"Sensitivity", data: asms.map(a=>a.sens_s), backgroundColor: asms.map(a=>({High:"#059669","Medium-High":"#2563eb",Medium:"#d97706","Low-Medium":"#dc2626"}[a.conf]||"#d97706")), borderRadius:3, barThickness:14 }] },
+      options:{ indexAxis:"y", plugins:{ legend:{display:false} }, scales:{ x:{ min:0, max:5.5, grid:{color:"#f0f2f5"}, ticks:{ font:{size:10}, callback:v=>["","Low","Medium","Med-High","High","Very High"][Math.round(v)]||"" } }, y:{ grid:{display:false}, ticks:{font:{size:11}} } } }
+    });
+  }, 50);
+}
+
+function renderForecast(el, r) {
+  const cid = "c-fc";
+  killChart(cid);
+  if (r.mode === "framework") {
+    el.innerHTML = sh(13,"Forecast / Outlook") + fwIntro("forecast", r.label) + emptyChart("Spending/growth trajectory — requires research data") + phCards(3,"Scenario — requires research");
+    return;
+  }
+  // Live mode: narrative + scenario table only — no line chart (API returns no time-series data)
+  if (r.mode === "live") {
+    const lf = r.sections.forecast;
+    const sc = lf.scenarios;
+    el.innerHTML = sh(13,"Forecast / Outlook") +
+      `<div class="mb-22" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px">
+        <div class="t-small" style="color:var(--text-sec);line-height:1.7">${lf.narrative}</div>
+        <div class="t-muted mt-10" style="font-size:10px">${ev("INFERENCE")} Directional outlook — not a precise forecast.</div>
+      </div>
+      <h3 class="mb-14">Scenario Comparison</h3>
+      <div class="sc-wrap mb-0">
+        <table class="sc-table">
+          <thead><tr>
+            <th style="width:140px">Dimension</th>
+            <th style="background:#059669">${sc.upside.label}</th>
+            <th>${sc.base.label}</th>
+            <th style="background:#374151">${sc.downside.label}</th>
+          </tr></thead>
+          <tbody>${[["Key Drivers","drivers"],["Key Risks","risks"],["Watch Items","watch"]].map(([label,key])=>`
+            <tr><td class="sc-label">${label}</td><td>${sc.upside[key]}</td><td>${sc.base[key]}</td><td>${sc.downside[key]}</td></tr>`).join("")}
+            <tr><td class="sc-label">Evidence</td><td colspan="3" style="text-align:center">${ev("INFERENCE")} ${lf.confidence_note||"All scenarios are directional projections, not precise forecasts."}</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+    return;
+  }
+  const fc = r.data.forecast;
+  const sc = fc.scenarios;
+  el.innerHTML = sh(13,"Forecast / Outlook") +
+    `<div class="chart-box mb-22">
+      <div class="chart-ttl">EU-27 Defense Spending Trajectory (€ Billion)</div>
+      <div class="chart-sub">Actual 2020–2025 (FACT, EDA sources); projected 2026–2030 under three scenarios (INFERENCE).</div>
+      <canvas id="${cid}" height="115"></canvas>
+      <div class="chart-note">Sources: EDA Annual Report 2024 (€343B actual 2024); EDA 2025 projection (€381B). Forward scenarios are directional estimates, not official forecasts. INFERENCE.</div>
+    </div>
+    <h3 class="mb-14">Scenario Comparison</h3>
+    <div class="sc-wrap mb-0">
+      <table class="sc-table">
+        <thead><tr>
+          <th style="width:150px">Dimension</th>
+          <th style="background:#059669">${sc.upside.label}</th>
+          <th>${sc.base.label}</th>
+          <th style="background:#374151">${sc.downside.label}</th>
+        </tr></thead>
+        <tbody>${[["GDP Assumption","gdp"],["UAS Market","uas"],["Key Drivers","drivers"],["Key Risks","risks"],["Watch Items","watch"]].map(([label,key])=>`
+          <tr><td class="sc-label">${label}</td><td>${sc.upside[key]}</td><td>${sc.base[key]}</td><td>${sc.downside[key]}</td></tr>`).join("")}
+          <tr><td class="sc-label">Evidence</td><td colspan="3" style="text-align:center">${ev("INFERENCE")} All scenarios are directional projections, not precise forecasts.</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    charts[cid] = new Chart(ctx, {
+      type:"line",
+      data:{ labels: fc.labels, datasets:[
+        { label:"Actual (FACT)",           data:fc.actual,   borderColor:"#0f2240", backgroundColor:"transparent",             borderWidth:2.5, pointRadius:4, pointBackgroundColor:"#0f2240", tension:0.3 },
+        { label:"Base Case (INFERENCE)",   data:fc.base,     borderColor:"#1a56db", backgroundColor:"rgba(26,86,219,0.04)",    borderWidth:2,   borderDash:[6,4], pointRadius:3, tension:0.3 },
+        { label:"Upside (INFERENCE)",      data:fc.upside,   borderColor:"#059669", backgroundColor:"rgba(5,150,105,0.04)",    borderWidth:1.5, borderDash:[4,4], pointRadius:2, tension:0.3 },
+        { label:"Downside (INFERENCE)",    data:fc.downside, borderColor:"#dc2626", backgroundColor:"rgba(220,38,38,0.04)",    borderWidth:1.5, borderDash:[4,4], pointRadius:2, tension:0.3 }
+      ]},
+      options:{ plugins:{ legend:{ position:"top", labels:{ font:{size:11}, boxWidth:14 } } }, scales:{ x:{ grid:{color:"#f0f2f5"}, ticks:{font:{size:11}} }, y:{ title:{display:true,text:"€ Billion",font:{size:11}}, grid:{color:"#f0f2f5"}, ticks:{font:{size:11}} } } }
+    });
+  }, 50);
+}
+
+function renderSourcePanel(el, r) {
+  if (r.mode === "framework") { el.innerHTML = ""; return; }
+
+  // Live mode: citations from Gemini grounding metadata
+  if (r.mode === "live") {
+    const cits = r.citations || [];
+    if (cits.length === 0) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="src-panel">
+      <div class="src-hdr" onclick="toggleSrc()">
+        <div class="src-hdr-title">Live Sources — ${cits.length} grounding citations (${r.date})</div>
+        <div class="src-toggle" id="src-toggle-lbl">Show sources ↓</div>
+      </div>
+      <div class="src-body" id="src-body">
+        <table class="src-table">
+          <thead><tr><th>#</th><th>Title</th><th>URL</th></tr></thead>
+          <tbody>${cits.map((c,i)=>`<tr>
+            <td style="color:var(--text-muted);font-weight:600">${String(i+1).padStart(2,"0")}</td>
+            <td style="font-weight:500;color:var(--navy)">${c.title||"Source"}</td>
+            <td><a href="${c.url}" class="src-link" target="_blank" rel="noopener">${c.url}</a></td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Seeded mode: structured source register
+  if (!r.sources || r.sources.length === 0) { el.innerHTML = ""; return; }
+  const tierCol = {"1":"#0f2240","2":"#1a56db","3":"#6b7280"};
+  el.innerHTML = `<div class="src-panel">
+    <div class="src-hdr" onclick="toggleSrc()">
+      <div class="src-hdr-title">Source Register — ${r.sources.length} sources (${r.date})</div>
+      <div class="src-toggle" id="src-toggle-lbl">Show sources ↓</div>
+    </div>
+    <div class="src-body" id="src-body">
+      <table class="src-table">
+        <thead><tr><th>#</th><th>Tier</th><th>Organization</th><th>Title</th><th>Date</th><th>Purpose</th></tr></thead>
+        <tbody>${r.sources.map(s=>`<tr>
+          <td style="color:var(--text-muted);font-weight:600">${s.num}</td>
+          <td><span class="src-tier" style="color:${tierCol[s.tier]||"#6b7280"}">${s.tier}</span></td>
+          <td style="font-weight:500;color:var(--navy)">${s.org}</td>
+          <td><a href="${s.url}" class="src-link" target="_blank" rel="noopener">${s.title}</a></td>
+          <td style="white-space:nowrap">${s.date}</td>
+          <td>${s.purpose}</td>
+        </tr>`).join("")}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function toggleSrc() {
+  const body = document.getElementById("src-body");
+  const lbl  = document.getElementById("src-toggle-lbl");
+  if (!body) return;
+  body.classList.toggle("open");
+  lbl.textContent = body.classList.contains("open") ? "Hide sources ↑" : "Show sources ↓";
+}
+
+/* ============================================================
+   6. NAVIGATION
+============================================================ */
+
+const SECTIONS = [
+  { id:"s-exec",   label:"Executive Summary",        num:"01", render:renderExecSummary },
+  { id:"s-def",    label:"Industry Definition",       num:"02", render:renderIndustryDef },
+  { id:"s-vc",     label:"Value Chain",               num:"03", render:renderValueChain },
+  { id:"s-vp",     label:"Value Pools",               num:"04", render:renderValuePools },
+  { id:"s-comp",   label:"Competitive Landscape",     num:"05", render:renderCompetitive },
+  { id:"s-fin",    label:"Financials",                num:"06", render:renderFinancials },
+  { id:"s-tech",   label:"Technology",                num:"07", render:renderTechnology },
+  { id:"s-ops",    label:"Operations / Supply Chain", num:"08", render:renderOpsSupplyChain },
+  { id:"s-dis",    label:"Disruption",                num:"09", render:renderDisruption },
+  { id:"s-con",    label:"Constraints",               num:"10", render:renderConstraints },
+  { id:"s-kpi",    label:"KPIs",                      num:"11", render:renderKPIs },
+  { id:"s-asm",    label:"Assumptions",               num:"12", render:renderAssumptions },
+  { id:"s-fc",     label:"Forecast / Outlook",        num:"13", render:renderForecast }
+];
+
+function buildNav() {
+  document.getElementById("nav-links").innerHTML = SECTIONS.map(s=>`
+    <div class="nav-link" data-target="${s.id}" onclick="scrollToSection('${s.id}')">
+      <span class="nav-num">${s.num}</span>
+      <span>${s.label}</span>
+    </div>`).join("");
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function setupScrollSpy() {
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if (e.isIntersecting) {
+        document.querySelectorAll(".nav-link").forEach(l=>l.classList.remove("active"));
+        const lnk = document.querySelector(`.nav-link[data-target="${e.target.id}"]`);
+        if (lnk) lnk.classList.add("active");
+      }
+    });
+  }, { rootMargin:"-54px 0px -60% 0px", threshold:0 });
+  SECTIONS.forEach(s=>{ const el=document.getElementById(s.id); if(el) obs.observe(el); });
+}
+
+/* ============================================================
+   7. APP CONTROLLER
+============================================================ */
+
+let _report = null;
+
+function buildReport(input) {
+  const ds = detectDataset(input);
+  return {
+    industry_input: input,
+    label:   ds ? ds.label : (input || "Unknown Industry"),
+    mode:    ds ? "seeded" : "framework",
+    date:    ds ? ds.date  : new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"}),
+    data:    ds ? ds.data  : null,
+    sources: ds ? ds.sources : []
+  };
+}
+
+function renderReport(report) {
+  _report = report;
+
+  // Build nav
+  buildNav();
+
+  // Mode banner
+  const banner = document.getElementById("mode-banner");
+  if (report.mode === "seeded") {
+    banner.innerHTML = `<div class="mode-banner seeded"><strong>Seeded dataset loaded:</strong>&nbsp;${report.label}. Full analysis with source-backed data. Evidence classifications (FACT / ASSUMPTION / INFERENCE) are visible throughout the report.</div>`;
+  } else if (report.mode === "live") {
+    const note = report.confidence_notes || "Analysis generated by Gemini 2.0 Flash with Google Search grounding. Verify key claims against primary sources before using in decisions.";
+    banner.innerHTML = `<div class="mode-banner seeded" style="border-left-color:#059669"><strong>Live analysis — ${report.label}.</strong>&nbsp;${note}</div>`;
+  } else {
+    banner.innerHTML = `<div class="mode-banner framework"><strong>Framework mode — "${report.label}".</strong>&nbsp;No seeded dataset matches this industry. The 10-section analytical framework is shown with research questions. No data is fabricated — populate with original research to complete the report.</div>`;
+  }
+
+  // Mode label in header
+  const modeLabels = { seeded: `Seeded: ${report.label}`, live: `Live: ${report.label}`, framework: `Framework: ${report.label}`, error: `Error: ${report.label}` };
+  document.getElementById("rpt-mode-label").textContent = modeLabels[report.mode] || report.label;
+
+  // Build section containers
+  document.getElementById("sections").innerHTML = SECTIONS.map(s=>`<div id="${s.id}" class="rpt-section"></div>`).join("");
+
+  // Render all sections
+  SECTIONS.forEach(s=>{
+    const el = document.getElementById(s.id);
+    if (el) s.render(el, report);
+  });
+
+  // Source panel
+  renderSourcePanel(document.getElementById("source-panel"), report);
+
+  // Scroll spy
+  setTimeout(setupScrollSpy, 300);
+}
+
+async function generate(input) {
+  if (!input || !input.trim()) { alert("Please enter an industry or segment to analyze."); return; }
+  const term = input.trim();
+
+  // Transition: hide landing, show loading skeleton
+  document.getElementById("landing").style.display = "none";
+  document.getElementById("loading-state").classList.add("active");
+  document.getElementById("report-state").classList.remove("active");
+
+  // ?seeded flag forces local static data — for offline dev only
+  const forceSeeded = new URLSearchParams(window.location.search).has("seeded");
+  if (forceSeeded) {
+    setTimeout(()=>{
+      const report = buildReport(term);
+      document.getElementById("loading-state").classList.remove("active");
+      document.getElementById("report-state").classList.add("active");
+      document.getElementById("rpt-input").value = term;
+      renderReport(report);
+      window.scrollTo(0,0);
+    }, 400);
+    return;
+  }
+
+  // All inputs — including UAS — go through the live backend pipeline.
+  // Local UAS data is injected as seed context server-side (prompt_builder.py),
+  // but the final output always comes from Gemini + Google Search grounding.
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ industry: term })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({ detail: res.statusText }));
+      throw new Error(err.detail || `Server error ${res.status}`);
+    }
+
+    const data = await res.json();
+    // data = { mode:"live", label, date, sections, citations, confidence_notes }
+    const report = { ...data, industry_input: term };
+
+    document.getElementById("loading-state").classList.remove("active");
+    document.getElementById("report-state").classList.add("active");
+    document.getElementById("rpt-input").value = term;
+    renderReport(report);
+    window.scrollTo(0,0);
+
+  } catch (err) {
+    // Fallback: use seeded data if available, otherwise show framework skeleton
+    const ds = detectDataset(term);
+    const report = ds
+      ? { industry_input:term, label:ds.label, mode:"seeded_fallback", date:ds.date, data:ds.data, sources:ds.sources }
+      : { industry_input:term, label:term,      mode:"framework",       date:new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"}), data:null, sources:[] };
+
+    document.getElementById("loading-state").classList.remove("active");
+    document.getElementById("report-state").classList.add("active");
+    document.getElementById("rpt-input").value = term;
+
+    // Render as seeded or framework — then prepend the error banner
+    const renderMode = ds ? "seeded" : "framework";
+    renderReport({ ...report, mode: renderMode });
+    const banner = document.getElementById("mode-banner");
+    const fallbackNote = ds
+      ? `Showing cached seeded data (${ds.label}) — sections 6–13 require a live call.`
+      : "Framework skeleton shown — populate with research to complete the report.";
+    banner.innerHTML = `<div class="mode-banner framework" style="border-left-color:#dc2626">
+      <strong>Live analysis failed — fallback active.</strong>&nbsp;${fallbackNote}<br>
+      <span style="font-size:11px">Error: ${err.message}. Check that your Render backend is running.</span>
+    </div>` + banner.innerHTML;
+    window.scrollTo(0,0);
+  }
+}
+
+function reset() {
+  document.getElementById("report-state").classList.remove("active");
+  document.getElementById("loading-state").classList.remove("active");
+  document.getElementById("landing").style.display = "";
+  document.getElementById("landing-input").value = "";
+  _report = null;
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   8. EVENT LISTENERS
+============================================================ */
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Landing
+  document.getElementById("btn-generate-landing").addEventListener("click", ()=>generate(document.getElementById("landing-input").value));
+  document.getElementById("landing-input").addEventListener("keydown", e=>{ if(e.key==="Enter") generate(document.getElementById("landing-input").value); });
+  document.getElementById("btn-clear-landing").addEventListener("click", ()=>{ document.getElementById("landing-input").value=""; });
+
+  // Example chips
+  document.querySelectorAll(".chip").forEach(c=>{
+    c.addEventListener("click", ()=>generate(c.dataset.value));
+  });
+
+  // Report header
+  document.getElementById("btn-regen").addEventListener("click", ()=>generate(document.getElementById("rpt-input").value));
+  document.getElementById("rpt-input").addEventListener("keydown", e=>{ if(e.key==="Enter") generate(document.getElementById("rpt-input").value); });
+  document.getElementById("btn-back").addEventListener("click", reset);
+});
+</script>
+</body>
+</html>
