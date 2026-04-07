@@ -149,6 +149,8 @@
       transition: all 0.13s;
     }
     .chip:hover { border-color: var(--accent); color: var(--accent); }
+    .chip.chip-history { border-style: dashed; color: var(--text-muted); }
+    .chip.chip-history:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
 
     /* ============================================================
        LOADING STATE
@@ -939,12 +941,9 @@
       <button class="btn-secondary" id="btn-clear-landing">Clear</button>
     </div>
     <div>
-      <div class="landing-hint">Try the seeded example or any industry:</div>
-      <div class="example-chips">
+      <div class="landing-hint" id="chips-hint">Try the seeded example:</div>
+      <div class="example-chips" id="example-chips">
         <span class="chip" data-value="European military UAS">European Military UAS ★</span>
-        <span class="chip" data-value="European defense electronics">Defense Electronics</span>
-        <span class="chip" data-value="cloud security software">Cloud Security</span>
-        <span class="chip" data-value="offshore wind energy">Offshore Wind</span>
       </div>
     </div>
   </div>
@@ -1644,9 +1643,16 @@ function renderCompetitive(el, r) {
         document.querySelectorAll("#comp-filters .flt-btn").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         const f = btn.dataset.filter;
+        // Update cards
         document.querySelectorAll("#comp-cards .comp-card").forEach(c=>{
           c.style.display = (f==="all"||c.dataset.type===f) ? "" : "none";
         });
+        // Update scatter chart — show only matching datasets
+        const ch = charts[cid];
+        if (ch) {
+          ch.data.datasets.forEach(ds=>{ ds.hidden = !(f==="all" || ds.label===f); });
+          ch.update();
+        }
       });
     });
   }, 100);
@@ -1677,14 +1683,16 @@ function renderFinancials(el, r) {
       </div>`).join("")}</div>
     ${costs.length ? `
     <h3 class="mb-10">Cost Structure</h3>
-    <div class="stack mb-18">${costs.map(c=>`
-      <div class="con-item">
-        <div class="con-rank" style="background:var(--navy);color:#fff;font-size:9px;padding:4px">${c.share||"—"}</div>
-        <div class="con-body">
-          <div class="con-name">${c.item}</div>
-          <div class="con-desc">${c.notes}</div>
+    <div class="stack mb-18">${costs.map(c=>{
+      const unreliable = !c.share || c.share.toLowerCase().includes("not reliably") || c.share === "—";
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow-sm)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">${c.item}</div>
+          ${unreliable ? "" : `<div style="font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0;margin-left:16px">${c.share}</div>`}
         </div>
-      </div>`).join("")}</div>` : ""}
+        <div style="font-size:12px;color:var(--text-sec);line-height:1.5">${c.notes}</div>
+      </div>`;
+    }).join("")}</div>` : ""}
     ${segs.length ? `
     <h3 class="mb-10">Profitability by Segment</h3>
     <div class="ga mb-18">${segs.map(s=>`
@@ -1804,13 +1812,15 @@ function renderOpsSupplyChain(el, r) {
     ${streams.length ? `
     <h3 class="mb-10">Actor Mapping by Stream</h3>
     <div class="stack mb-18">${streams.map(s=>`
-      <div class="con-item">
-        <div class="con-rank" style="background:${streamCol[s.stream]||"#1a56db"};color:#fff;font-size:9px;padding:4px;writing-mode:horizontal-tb">${s.stream}</div>
-        <div class="con-body">
+      <div style="background:#fff;border:1px solid var(--border);border-left:4px solid ${streamCol[s.stream]||"#1a56db"};border-radius:var(--radius);display:flex;box-shadow:var(--shadow-sm);overflow:hidden">
+        <div style="width:28px;flex-shrink:0;background:${streamCol[s.stream]||"#1a56db"}1a;display:flex;align-items:center;justify-content:center;padding:10px 0">
+          <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:${streamCol[s.stream]||"#1a56db"}">${s.stream}</span>
+        </div>
+        <div style="padding:12px 14px;flex:1">
           <div class="con-name">${s.actors}</div>
           <div class="con-desc">${s.activities}</div>
-          <div class="con-desc t-muted" style="font-style:italic;font-size:11px">${s.power_dynamics}</div>
-          <div class="con-meta">${ev(s.evidence)}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:5px">${s.power_dynamics}</div>
+          <div class="con-meta mt-7">${ev(s.evidence)}</div>
         </div>
       </div>`).join("")}</div>` : ""}
     ${steps.length ? `
@@ -2402,10 +2412,59 @@ document.addEventListener("DOMContentLoaded", ()=>{
   document.getElementById("landing-input").addEventListener("keydown", e=>{ if(e.key==="Enter") generate(document.getElementById("landing-input").value); });
   document.getElementById("btn-clear-landing").addEventListener("click", ()=>{ document.getElementById("landing-input").value=""; });
 
-  // Example chips
-  document.querySelectorAll(".chip").forEach(c=>{
-    c.addEventListener("click", ()=>generate(c.dataset.value));
-  });
+  // Search history (localStorage)
+  const HISTORY_KEY = "ia_search_history";
+  const HISTORY_MAX = 5;
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveHistory(term) {
+    try {
+      const h = getHistory().filter(t => t.toLowerCase() !== term.toLowerCase());
+      h.unshift(term);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, HISTORY_MAX)));
+    } catch {}
+  }
+
+  function renderChips() {
+    const container = document.getElementById("example-chips");
+    const hint = document.getElementById("chips-hint");
+    const history = getHistory();
+
+    // UAS chip always first
+    let html = `<span class="chip" data-value="European military UAS">European Military UAS ★</span>`;
+
+    // History chips
+    history.forEach(t => {
+      if (t.toLowerCase() !== "european military uas") {
+        html += `<span class="chip chip-history" data-value="${t.replace(/"/g,"&quot;")}">${t}</span>`;
+      }
+    });
+
+    container.innerHTML = html;
+    hint.textContent = history.length ? "Recent searches:" : "Try the seeded example:";
+
+    // Attach click handlers
+    container.querySelectorAll(".chip").forEach(c => {
+      c.addEventListener("click", () => {
+        document.getElementById("landing-input").value = c.dataset.value;
+        generate(c.dataset.value);
+      });
+    });
+  }
+
+  // Patch generate() to save history on each call
+  const _generateOrig = generate;
+  generate = async function(input) {
+    if (input && input.trim()) saveHistory(input.trim());
+    renderChips();
+    return _generateOrig(input);
+  };
+
+  renderChips();
 
   // Report header
   document.getElementById("btn-regen").addEventListener("click", ()=>generate(document.getElementById("rpt-input").value));
